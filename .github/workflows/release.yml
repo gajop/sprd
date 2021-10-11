@@ -1,0 +1,58 @@
+
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: ${{ matrix.config.os }}
+    runs-on: ${{ matrix.config.runs-on }}
+    strategy:
+      matrix:
+        config:
+        - {
+            os: 'windows-64',
+            runs-on: 'windows-latest'
+          }
+        - {
+            os: 'linux-64',
+            runs-on: 'ubuntu-latest'
+          }
+    steps:
+      - name: Extract Branch Name
+        #https://stackoverflow.com/questions/58033366/how-to-get-current-branch-within-github-actions/58034787
+        id: extract-branch
+#        if: github.event_name != 'pull_request'
+        run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} | tr / -)" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build project
+        run: cargo build --release --locked
+
+      - name: Declare some variables
+        id: vars
+        shell: bash
+        run: |
+          echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+          echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+
+
+      - name: Upload Linux
+        if: matrix.config.os == 'linux-64'
+        uses: actions/upload-artifact@v2
+        with:
+          name: prd-rs-${{ steps.vars.outputs.branch }}-${{ steps.vars.outputs.sha_short }}-linux64
+          path: target/release/prd-rs
+
+      - name: Upload Windows
+        uses: actions/upload-artifact@v2
+        if: matrix.config.os == 'windows-64'
+        with:
+          name: prd-rs-${{ steps.vars.outputs.branch }}-${{ steps.vars.outputs.sha_short }}-win64
+          path: target/release/prd-rs.exe

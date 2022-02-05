@@ -1,16 +1,16 @@
 [package]
 authors = ["Gajo Petrovic <gajopetrovic@gmail.com>"]
-edition = "2018"
+edition = "2021"
 name = "sprd"
 version = "0.1.0"
 
 [dependencies]
-clap = "2.33.3"
-dirs = "3.0.1"
-flate2 = "1.0.19"
-hyper = "0.13.9"
-hyper-tls = "0.4.3"
-indicatif = "0.15.0"
-md-5 = "0.9.1"
-tempfile = "3.1.0"
-tokio = {version = "0.2.24", features = ["full"]}
+clap = "3.0.14"
+dirs = "4.0.0"
+flate2 = "1.0.22"
+hyper = "0.14.16"
+hyper-tls = "0.5.0"
+indicatif = "0.16.2"
+md-5 = "0.10.0"
+tempfile = "3.3.0"
+tokio = {version = "1.16.1", features = ["full"]}

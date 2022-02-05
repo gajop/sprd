@@ -31,7 +31,7 @@ jobs:
         uses: svenstaro/upload-release-action@v1-release
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: target/release/prd-rs
-          asset_name: prd-rs-${{ matrix.os }}-amd64
+          file: target/release/sprd
+          asset_name: sprd-${{ matrix.os }}-amd64
           tag: ${{ steps.bump_version.outputs.new_tag }}
           overwrite: true

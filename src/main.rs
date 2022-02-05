@@ -11,7 +11,7 @@ mod util;
 
 #[tokio::main]
 async fn main() {
-    let matches = App::new("prd-rs")
+    let matches = App::new("sprd")
         .version("0.1.0")
         .author("Gajo Petrovic <gajopetrovic@gmail.com>")
         .about("Rapid client")

@@ -22,7 +22,7 @@ mod tests {
     fn no_file() {
         let springdir = tempfile::tempdir().unwrap();
         let rapid_store = rapid_store::RapidStore {
-            root_folder: &springdir.path(),
+            root_folder: springdir.path(),
         };
 
         assert!(check_if_sdp_needs_download(&rapid_store, "test"));

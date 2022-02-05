@@ -47,12 +47,12 @@ jobs:
         if: matrix.config.os == 'linux-64'
         uses: actions/upload-artifact@v2
         with:
-          name: prd-rs-${{ steps.vars.outputs.branch }}-${{ steps.vars.outputs.sha_short }}-linux64
-          path: target/release/prd-rs
+          name: sprd-${{ steps.vars.outputs.branch }}-${{ steps.vars.outputs.sha_short }}-linux64
+          path: target/release/sprd
 
       - name: Upload Windows
         uses: actions/upload-artifact@v2
         if: matrix.config.os == 'windows-64'
         with:
-          name: prd-rs-${{ steps.vars.outputs.branch }}-${{ steps.vars.outputs.sha_short }}-win64
-          path: target/release/prd-rs.exe
+          name: sprd-${{ steps.vars.outputs.branch }}-${{ steps.vars.outputs.sha_short }}-win64
+          path: target/release/sprd.exe

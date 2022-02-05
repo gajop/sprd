@@ -4,7 +4,7 @@ use crate::rapid;
 use crate::rapid::rapid_store::RapidStore;
 
 pub fn check_sdp(rapid_store: &rapid::rapid_store::RapidStore, sdp_md5: &str) {
-    if api::check_if_sdp_needs_download(&rapid_store, sdp_md5) {
+    if api::check_if_sdp_needs_download(rapid_store, sdp_md5) {
         println!("Download necessary");
         std::process::exit(1);
     } else {
@@ -15,7 +15,7 @@ pub fn check_sdp(rapid_store: &rapid::rapid_store::RapidStore, sdp_md5: &str) {
 
 pub async fn download<'a>(rapid_store: &RapidStore<'_>, tag: &str) {
     // if !rapid_store.get_registry_path().exists() {
-    download::download_repo_registry(&rapid_store)
+    download::download_repo_registry(rapid_store)
         .await
         .expect("Failed to download repository registry");
     // }
@@ -29,15 +29,15 @@ pub async fn download<'a>(rapid_store: &RapidStore<'_>, tag: &str) {
             Ok(repo_registry) => repo_registry,
         };
 
-    let repo_basename = tag.split(":").collect::<Vec<&str>>()[0];
-    let tag = tag.split(":").collect::<Vec<&str>>()[1];
+    let repo_basename = tag.split(':').collect::<Vec<&str>>()[0];
+    let tag = tag.split(':').collect::<Vec<&str>>()[1];
     let repo = repo_registry
         .into_iter()
         .find(|r| r.name == repo_basename)
         .unwrap();
 
     // Load or download repo SDP
-    download::download_repo(&rapid_store, &repo)
+    download::download_repo(rapid_store, &repo)
         .await
         .expect("Failed to download repository.");
     let sdp = match rapid_store.find_sdp(&repo, tag) {
@@ -53,7 +53,7 @@ pub async fn download<'a>(rapid_store: &RapidStore<'_>, tag: &str) {
 
     let dest_sdp = rapid_store.get_sdp_path(&sdp);
     // if !dest_sdp.exists() {
-    match download::download_sdp(&rapid_store, &repo, &sdp).await {
+    match download::download_sdp(rapid_store, &repo, &sdp).await {
         Ok(_) => {}
         Err(err) => {
             println!("Failed to download SDP: {}", err);
@@ -68,7 +68,7 @@ pub async fn download<'a>(rapid_store: &RapidStore<'_>, tag: &str) {
         .expect("Failed to load SDP Package from file");
 
     let download_map = rapid_store.get_nonexisting_files_download_map(&sdp_files);
-    download::download_sdp_files(&rapid_store, &repo, &sdp, download_map, &sdp_files)
+    download::download_sdp_files(rapid_store, &repo, &sdp, download_map, &sdp_files)
         .await
         .expect("Failed to download SDP files");
 }
@@ -112,14 +112,14 @@ pub async fn download_sdp<'a>(rapid_store: &RapidStore<'_>, sdp_md5: &str) {
         }
     };
 
-    match download::download_sdp(&rapid_store, &repo, &sdp).await {
+    match download::download_sdp(rapid_store, &repo, &sdp).await {
         Ok(()) => {}
         Err(err) => println!("Failed to update registry: {}", err.to_string()),
     }
 }
 
 pub async fn download_registry<'a>(rapid_store: &RapidStore<'_>) {
-    match download::download_repo_registry(&rapid_store).await {
+    match download::download_repo_registry(rapid_store).await {
         Ok(()) => {}
         Err(err) => println!("Failed to update registry: {}", err.to_string()),
     }
@@ -150,21 +150,19 @@ async fn download_one_repo<'a>(rapid_store: &RapidStore<'_>, repo: &str) {
         }
     };
 
-    match download::download_repo(&rapid_store, &repo).await {
+    match download::download_repo(rapid_store, &repo).await {
         Ok(()) => println!("Download success"),
         Err(err) => {
             println!("Failed to download repository: {}", err.to_string());
-            return;
         }
     }
 }
 
 async fn download_all_repos<'a>(rapid_store: &RapidStore<'_>) {
-    match download::download_all_repos(&rapid_store).await {
+    match download::download_all_repos(rapid_store).await {
         Ok(()) => {}
         Err(err) => {
             println!("Failed to download all repositories: {}", err.to_string());
-            return;
         }
     }
 }

@@ -8,7 +8,7 @@ version = "0.1.0"
 clap = "3.0.14"
 dirs = "4.0.0"
 flate2 = "1.0.22"
-hyper = "0.14.16"
+hyper = {version = "0.14.16", features = ["client", "http1", "http2"]}
 hyper-tls = "0.5.0"
 indicatif = "0.16.2"
 md-5 = "0.10.0"

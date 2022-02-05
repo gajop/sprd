@@ -16,52 +16,30 @@ async fn main() {
         .author("Gajo Petrovic <gajopetrovic@gmail.com>")
         .about("Rapid client")
         .arg(
-            Arg::with_name("root-folder")
+            Arg::new("root-folder")
                 .long("root-folder")
                 .takes_value(true),
         )
         .subcommand(
-            clap::SubCommand::with_name("check-sdp")
-                .arg(
-                    Arg::with_name("sdp")
-                        .index(1)
-                        .takes_value(true)
-                        .required(true),
-                )
-                .help("Check if SDP is fully downloaded"),
+            App::new("check-sdp")
+                .arg(Arg::new("sdp").index(1).takes_value(true).required(true))
+                .about("Check if SDP is fully downloaded"),
         )
         .subcommand(
-            clap::SubCommand::with_name("download")
-                .arg(
-                    Arg::with_name("tag")
-                        .index(1)
-                        .takes_value(true)
-                        .required(true),
-                )
-                .help("Download the specified rapid tag"),
+            App::new("download")
+                .arg(Arg::new("tag").index(1).takes_value(true).required(true))
+                .about("Download the specified rapid tag"),
+        )
+        .subcommand(App::new("download-registry").about("Download the registry metadata"))
+        .subcommand(
+            App::new("download-repo")
+                .arg(Arg::new("repo").index(1).takes_value(true).required(false))
+                .about("Download the repository metadata"),
         )
         .subcommand(
-            clap::SubCommand::with_name("download-registry").help("Download the registry metadata"),
-        )
-        .subcommand(
-            clap::SubCommand::with_name("download-repo")
-                .arg(
-                    Arg::with_name("repo")
-                        .index(1)
-                        .takes_value(true)
-                        .required(false),
-                )
-                .help("Download the repository metadata"),
-        )
-        .subcommand(
-            clap::SubCommand::with_name("download-sdp")
-                .arg(
-                    Arg::with_name("sdp")
-                        .index(1)
-                        .takes_value(true)
-                        .required(true),
-                )
-                .help("Download SDP"),
+            App::new("download-sdp")
+                .arg(Arg::new("sdp").index(1).takes_value(true).required(true))
+                .about("Download SDP"),
         )
         .get_matches();
 
@@ -75,22 +53,22 @@ async fn main() {
     };
 
     match matches.subcommand() {
-        ("check-sdp", Some(sub_m)) => {
+        Some(("check-sdp", sub_m)) => {
             let sdp_md5 = sub_m.value_of("sdp").unwrap();
             commands::check_sdp(&rapid_store, sdp_md5);
         }
-        ("download", Some(sub_m)) => {
+        Some(("download", sub_m)) => {
             let tag = sub_m.value_of("tag").unwrap();
             commands::download(&rapid_store, tag).await;
         }
-        ("download-sdp", Some(sub_m)) => {
+        Some(("download-sdp", sub_m)) => {
             let sdp_md5 = sub_m.value_of("sdp").unwrap();
             commands::download_sdp(&rapid_store, sdp_md5).await;
         }
-        ("download-registry", Some(_)) => {
+        Some(("download-registry", _)) => {
             commands::download_registry(&rapid_store).await;
         }
-        ("download-repo", Some(sub_m)) => {
+        Some(("download-repo", sub_m)) => {
             let repo = sub_m.value_of("repo");
             commands::download_repo(&rapid_store, repo).await;
         }

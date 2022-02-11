@@ -17,10 +17,8 @@ use super::rapid::{
     types::{Repo, Sdp, SdpPackage},
 };
 
-extern crate hyper;
-
 fn get_next_dl_file(
-    rapid_store: &RapidStore,
+    rapid_store: &RapidStore<'_>,
     files: &[SdpPackage],
     start_index: usize,
 ) -> Option<usize> {

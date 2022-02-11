@@ -1,6 +1,6 @@
 use super::rapid::{parsing, rapid_store};
 
-pub fn check_if_sdp_needs_download(rapid_store: &rapid_store::RapidStore, md5: &str) -> bool {
+pub fn check_if_sdp_needs_download(rapid_store: &rapid_store::RapidStore<'_>, md5: &str) -> bool {
     let sdp_path = rapid_store.get_sdp_path_from_md5(md5);
 
     if !sdp_path.exists() {

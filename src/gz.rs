@@ -14,7 +14,7 @@ pub fn read_gz_from_file(path: &path::Path) -> Result<String, Box<dyn Error>> {
 }
 
 pub fn read_gz_from_data(data: &[u8]) -> Result<String, Box<dyn Error>> {
-    let mut d = GzDecoder::new(&data[..]);
+    let mut d = GzDecoder::new(data);
     let mut s = String::new();
     d.read_to_string(&mut s)?;
 
@@ -29,7 +29,7 @@ pub fn read_binary_gz_from_file(path: &path::Path) -> Result<Vec<u8>, Box<dyn Er
 }
 
 pub fn read_binary_gz_from_data(data: &[u8]) -> Result<Vec<u8>, Box<dyn Error>> {
-    let mut d = GzDecoder::new(&data[..]);
+    let mut d = GzDecoder::new(data);
     let mut s = Vec::new();
     d.read_to_end(&mut s)?;
 
@@ -45,7 +45,7 @@ fn read_binary_file(path: &path::Path) -> Result<Vec<u8>, Box<dyn Error>> {
 }
 
 pub fn gzip_data(data: &[u8]) -> Result<Vec<u8>, Box<dyn Error>> {
-    let mut d = GzEncoder::new(&data[..], flate2::Compression::default());
+    let mut d = GzEncoder::new(data, flate2::Compression::default());
     let mut out = Vec::new();
     d.read_to_end(&mut out)?;
 

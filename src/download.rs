@@ -14,18 +14,18 @@ use super::gz;
 use super::rapid::{
     parsing::parse_repos_from_file,
     rapid_store::RapidStore,
-    types::{Repo, SDPPackage, SDP},
+    types::{Repo, Sdp, SdpPackage},
 };
 
 extern crate hyper;
 
 fn get_next_dl_file(
     rapid_store: &RapidStore,
-    files: &Vec<SDPPackage>,
+    files: &[SdpPackage],
     start_index: usize,
 ) -> Option<usize> {
-    for i in start_index..files.len() {
-        let file_path = rapid_store.get_pool_path(&files[i]);
+    for (i, file) in files.iter().enumerate().skip(start_index) {
+        let file_path = rapid_store.get_pool_path(file);
         if !file_path.exists() {
             return Some(i);
         }
@@ -34,12 +34,12 @@ fn get_next_dl_file(
     None
 }
 
-pub async fn download_sdp_files<'a>(
-    rapid_store: &RapidStore<'a>,
+pub async fn download_sdp_files(
+    rapid_store: &RapidStore<'_>,
     repo: &Repo,
-    sdp: &SDP,
+    sdp: &Sdp,
     download_map: Vec<u8>,
-    sdp_files: &Vec<SDPPackage>,
+    sdp_files: &[SdpPackage],
 ) -> Result<(), Box<dyn Error>> {
     let url = format!("{}/streamer.cgi?{}", repo.url, sdp.md5);
     let url = url.parse::<hyper::Uri>().unwrap();
@@ -79,7 +79,7 @@ pub async fn download_sdp_files<'a>(
     let mut size = 0;
     let mut read_amount = 0;
 
-    let mut file_index = get_next_dl_file(&rapid_store, &sdp_files, 0).unwrap();
+    let mut file_index = get_next_dl_file(rapid_store, sdp_files, 0).unwrap();
     let mut sdp_file = &sdp_files[file_index];
 
     let mut dest = rapid_store.get_pool_path(sdp_file);
@@ -129,8 +129,7 @@ pub async fn download_sdp_files<'a>(
                 chunk_index += read_chunk;
 
                 if file_read_size == size as usize {
-                    file_index =
-                        get_next_dl_file(&rapid_store, &sdp_files, file_index + 1).unwrap();
+                    file_index = get_next_dl_file(rapid_store, sdp_files, file_index + 1).unwrap();
                     sdp_file = &sdp_files[file_index];
 
                     dest = rapid_store.get_pool_path(sdp_file);
@@ -155,7 +154,7 @@ pub async fn download_sdp_files<'a>(
 pub async fn download_sdp(
     rapid_store: &RapidStore<'_>,
     repo: &Repo,
-    sdp: &SDP,
+    sdp: &Sdp,
 ) -> Result<(), Box<dyn Error>> {
     let url = format!("{}/packages/{}.sdp", repo.url, sdp.md5);
     let url = hyper::Uri::from_str(&url).unwrap();
@@ -167,7 +166,7 @@ pub async fn download_all_repos(rapid_store: &RapidStore<'_>) -> Result<(), Box<
     let registry_file = rapid_store.get_registry_path();
     let repos = parse_repos_from_file(&registry_file)?;
     for repo in repos {
-        download_repo(&rapid_store, &repo).await?;
+        download_repo(rapid_store, &repo).await?;
     }
 
     Ok(())

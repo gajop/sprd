@@ -83,7 +83,7 @@ pub async fn download_sdp<'a>(rapid_store: &RapidStore<'_>, sdp_md5: &str) {
             Ok(repo_registry) => repo_registry,
         };
 
-    let mut found_sdp: Option<rapid::types::SDP> = None;
+    let mut found_sdp: Option<rapid::types::Sdp> = None;
     let mut found_repo: Option<rapid::types::Repo> = None;
     for repo in repo_registry {
         let sdps = match rapid::parsing::read_rapid_from_file(&rapid_store.get_repo_path(&repo)) {

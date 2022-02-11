@@ -2,7 +2,7 @@ use std::error::Error;
 use std::path;
 
 use super::parsing::read_rapid_from_file;
-use super::types::{Repo, SDPPackage, SDP};
+use super::types::{Repo, Sdp, SdpPackage};
 
 pub struct RapidStore<'a> {
     pub root_folder: &'a path::Path,
@@ -14,7 +14,7 @@ impl<'a> RapidStore<'a> {
     //     Ok(repos.into_iter().find(|repo| repo.name.contains(name)))
     // }
 
-    pub fn find_sdp(&self, repo: &Repo, name: &str) -> Result<Option<SDP>, Box<dyn Error>> {
+    pub fn find_sdp(&self, repo: &Repo, name: &str) -> Result<Option<Sdp>, Box<dyn Error>> {
         let repo_path = self.root_folder.join(&format!(
             "rapid/repos.springrts.com/{}/version.gz",
             repo.name
@@ -25,7 +25,7 @@ impl<'a> RapidStore<'a> {
             .find(|sdp| sdp.fullname.contains(name) || sdp.alias.contains(name)))
     }
 
-    pub fn find_nonexisting_files(&self, sdp_files: Vec<SDPPackage>) -> Vec<SDPPackage> {
+    pub fn find_nonexisting_files(&self, sdp_files: Vec<SdpPackage>) -> Vec<SdpPackage> {
         sdp_files
             .into_iter()
             .filter(|sdp_file| !self.get_pool_path(sdp_file).exists())
@@ -45,7 +45,7 @@ impl<'a> RapidStore<'a> {
         self.root_folder.join(format!("rapid/{}/version.gz", name))
     }
 
-    pub fn get_sdp_path(&self, sdp: &SDP) -> path::PathBuf {
+    pub fn get_sdp_path(&self, sdp: &Sdp) -> path::PathBuf {
         self.get_sdp_path_from_md5(&sdp.md5)
     }
 
@@ -54,29 +54,27 @@ impl<'a> RapidStore<'a> {
             .join(path::PathBuf::from(format!("packages/{}.sdp", sdp_md5)))
     }
 
-    pub fn get_pool_path(&self, sdp_package: &SDPPackage) -> path::PathBuf {
+    pub fn get_pool_path(&self, sdp_package: &SdpPackage) -> path::PathBuf {
         let file_path = self.root_folder.join(format!(
             "pool/{}{}/{}.gz",
             sdp_package.md5[0],
             sdp_package.md5[1],
-            &sdp_package.md5[2..32].into_iter().collect::<String>()
+            &sdp_package.md5[2..32].iter().collect::<String>()
         ));
 
         file_path
     }
 
-    pub fn get_nonexisting_files_download_map(&self, sdp_files: &[SDPPackage]) -> Vec<u8> {
+    pub fn get_nonexisting_files_download_map(&self, sdp_files: &[SdpPackage]) -> Vec<u8> {
         let map_length = sdp_files.len() / 8 + 1;
         let mut download_map: Vec<u8> = vec![0; map_length];
 
-        let mut index = 0;
-        for sdp_file in sdp_files {
+        for (i, sdp_file) in sdp_files.iter().enumerate() {
             let file_path = self.get_pool_path(sdp_file);
 
             if !file_path.exists() {
-                download_map[index / 8] |= 1 << (index % 8);
+                download_map[i / 8] |= 1 << (i % 8);
             }
-            index += 1;
         }
 
         download_map

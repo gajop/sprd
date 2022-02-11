@@ -4,7 +4,7 @@ use std::path;
 use std::str;
 use std::u32;
 
-use super::types::{Repo, SDPPackage, SDP};
+use super::types::{Repo, Sdp, SdpPackage};
 
 pub fn parse_repos_from_file(path: &path::Path) -> Result<Vec<Repo>, Box<dyn Error>> {
     let s = crate::gz::read_gz_from_file(path)?;
@@ -28,12 +28,12 @@ pub fn parse_repos_from_str(s: &str) -> Result<Vec<Repo>, Box<dyn Error>> {
     Ok(entries)
 }
 
-pub fn read_rapid_from_file(path: &path::Path) -> Result<Vec<SDP>, Box<dyn Error>> {
+pub fn read_rapid_from_file(path: &path::Path) -> Result<Vec<Sdp>, Box<dyn Error>> {
     let parsed_gz = crate::gz::read_gz_from_file(path)?;
     read_rapid_from_str(&parsed_gz)
 }
 
-pub fn read_rapid_from_str(parsed_gz: &str) -> Result<Vec<SDP>, Box<dyn Error>> {
+pub fn read_rapid_from_str(parsed_gz: &str) -> Result<Vec<Sdp>, Box<dyn Error>> {
     let mut entries = Vec::new();
 
     for line in parsed_gz.lines() {
@@ -42,7 +42,7 @@ pub fn read_rapid_from_str(parsed_gz: &str) -> Result<Vec<SDP>, Box<dyn Error>> 
             println!("MALFORMED FILE");
             continue;
         }
-        entries.push(SDP {
+        entries.push(Sdp {
             fullname: line_entry[0].to_string(),
             md5: line_entry[1].to_string(),
             something: line_entry[3].to_string(),
@@ -53,13 +53,13 @@ pub fn read_rapid_from_str(parsed_gz: &str) -> Result<Vec<SDP>, Box<dyn Error>> 
     Ok(entries)
 }
 
-pub fn load_sdp_packages_from_file(dest: &path::Path) -> Result<Vec<SDPPackage>, Box<dyn Error>> {
+pub fn load_sdp_packages_from_file(dest: &path::Path) -> Result<Vec<SdpPackage>, Box<dyn Error>> {
     let data = crate::gz::read_binary_gz_from_file(dest)?;
 
     load_sdp_packages(&data)
 }
 
-pub fn load_sdp_packages(data: &Vec<u8>) -> Result<Vec<SDPPackage>, Box<dyn Error>> {
+pub fn load_sdp_packages(data: &[u8]) -> Result<Vec<SdpPackage>, Box<dyn Error>> {
     let mut sdp_files = Vec::new();
 
     let mut index = 0;
@@ -83,14 +83,15 @@ pub fn load_sdp_packages(data: &Vec<u8>) -> Result<Vec<SDPPackage>, Box<dyn Erro
             write!(md5, "{:02x}", byte)?;
         }
 
-        let mut sdp_file: SDPPackage = Default::default();
+        let mut sdp_file = SdpPackage {
+            name: name.to_owned(),
+            ..Default::default()
+        };
         sdp_file.name = name.to_owned();
         sdp_file.crc32.copy_from_slice(crc32);
 
         let md5_chars: Vec<char> = md5.chars().collect();
-        for i in 0..md5_chars.len() {
-            sdp_file.md5[i] = md5_chars[i];
-        }
+        sdp_file.md5[..md5_chars.len()].clone_from_slice(&md5_chars[..]);
         sdp_file.size = u32::from_le_bytes(size);
 
         sdp_files.push(sdp_file);

@@ -6,7 +6,7 @@ use crate::{
 pub async fn download<'a>(rapid_store: &RapidStore<'_>, repo_tag: &str) {
     let repo_tag = repo_tag.split(':').collect::<Vec<&str>>();
     let repo_basename = repo_tag[0];
-    let repo = query_repo(rapid_store, repo_basename).await;
+    let repo = query_repo(rapid_store, repo_basename).await.unwrap();
 
     let tag = repo_tag[1];
 
@@ -47,7 +47,7 @@ pub async fn download<'a>(rapid_store: &RapidStore<'_>, repo_tag: &str) {
         .expect("Failed to download SDP files");
 }
 
-async fn query_repo(rapid_store: &RapidStore<'_>, repo_basename: &str) -> Repo {
+async fn query_repo(rapid_store: &RapidStore<'_>, repo_basename: &str) -> Option<Repo> {
     // if !rapid_store.get_registry_path().exists() {
     download::download_repo_registry(rapid_store)
         .await
@@ -62,8 +62,23 @@ async fn query_repo(rapid_store: &RapidStore<'_>, repo_basename: &str) -> Repo {
             Ok(repo_registry) => repo_registry,
         };
 
-    repo_registry
-        .into_iter()
-        .find(|r| r.name == repo_basename)
-        .unwrap()
+    repo_registry.into_iter().find(|r| r.name == repo_basename)
+}
+
+#[cfg(test)]
+
+mod tests {
+    use crate::util;
+
+    use super::*;
+
+    #[tokio::test]
+    async fn test_query() {
+        let rapid_store = rapid::rapid_store::RapidStore {
+            root_folder: &util::default_spring_dir(),
+        };
+        let repo = query_repo(&rapid_store, "byar").await.unwrap();
+        assert_eq!(repo.name, "byar");
+        assert_eq!(repo.url, "https://repos.springrts.com/byar");
+    }
 }

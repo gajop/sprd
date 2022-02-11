@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use clap::{Parser, Subcommand};
 
 mod api;
-mod commands;
+mod cmds;
 mod download;
 mod gz;
 mod rapid;
@@ -47,19 +47,19 @@ async fn main() {
 
     match &args.command {
         Commands::CheckSdp { sdp } => {
-            commands::check_sdp(&rapid_store, sdp);
+            cmds::check_sdp(&rapid_store, sdp);
         }
         Commands::Download { tag } => {
-            commands::download(&rapid_store, tag).await;
+            cmds::download(&rapid_store, tag).await;
         }
         Commands::DownloadSdp { sdp } => {
-            commands::download_sdp(&rapid_store, sdp).await;
+            cmds::download_sdp(&rapid_store, sdp).await;
         }
         Commands::DownloadRegistry => {
-            commands::download_registry(&rapid_store).await;
+            cmds::download_registry(&rapid_store).await;
         }
         Commands::DownloadRepo { repo } => {
-            commands::download_repo(&rapid_store, repo.as_deref()).await;
+            cmds::download_repo(&rapid_store, repo.as_deref()).await;
         }
     }
 }

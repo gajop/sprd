@@ -41,7 +41,7 @@ pub async fn download_sdp_files(
 ) -> Result<(), Box<dyn Error>> {
     let url = format!("{}/streamer.cgi?{}", repo.url, sdp.md5);
     let url = url.parse::<hyper::Uri>().unwrap();
-    // println!("{}", url);
+    // println!("{url}");
 
     let gzipped = gz::gzip_data(download_map.as_slice())?;
 

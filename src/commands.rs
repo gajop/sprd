@@ -23,7 +23,7 @@ pub async fn download<'a>(rapid_store: &RapidStore<'_>, tag: &str) {
     let repo_registry =
         match rapid::parsing::parse_repos_from_file(&rapid_store.get_registry_path()) {
             Err(err) => {
-                println!("Failed to open repository registry: {}.", err);
+                println!("Failed to open repository registry: {err}.");
                 return;
             }
             Ok(repo_registry) => repo_registry,
@@ -56,7 +56,7 @@ pub async fn download<'a>(rapid_store: &RapidStore<'_>, tag: &str) {
     match download::download_sdp(rapid_store, &repo, &sdp).await {
         Ok(_) => {}
         Err(err) => {
-            println!("Failed to download SDP: {}", err);
+            println!("Failed to download SDP: {err}");
             return;
         }
     }
@@ -77,7 +77,7 @@ pub async fn download_sdp<'a>(rapid_store: &RapidStore<'_>, sdp_md5: &str) {
     let repo_registry =
         match rapid::parsing::parse_repos_from_file(&rapid_store.get_registry_path()) {
             Err(err) => {
-                println!("Failed to open repository registry: {}.", err);
+                println!("Failed to open repository registry: {err}.");
                 return;
             }
             Ok(repo_registry) => repo_registry,
@@ -107,21 +107,21 @@ pub async fn download_sdp<'a>(rapid_store: &RapidStore<'_>, sdp_md5: &str) {
     let (sdp, repo) = match (found_sdp, found_repo) {
         (Some(sdp), Some(repo)) => (sdp, repo),
         _ => {
-            println!("No such sdp: {}", sdp_md5);
+            println!("No such sdp: {sdp_md5}");
             return;
         }
     };
 
     match download::download_sdp(rapid_store, &repo, &sdp).await {
         Ok(()) => {}
-        Err(err) => println!("Failed to update registry: {}", err),
+        Err(err) => println!("Failed to update registry: {err}"),
     }
 }
 
 pub async fn download_registry<'a>(rapid_store: &RapidStore<'_>) {
     match download::download_repo_registry(rapid_store).await {
         Ok(()) => {}
-        Err(err) => println!("Failed to update registry: {}", err),
+        Err(err) => println!("Failed to update registry: {err}"),
     }
 }
 
@@ -136,7 +136,7 @@ async fn download_one_repo<'a>(rapid_store: &RapidStore<'_>, repo: &str) {
     let repo_registry =
         match rapid::parsing::parse_repos_from_file(&rapid_store.get_registry_path()) {
             Err(err) => {
-                println!("Failed to open repository registry: {}.", err);
+                println!("Failed to open repository registry: {err}.");
                 return;
             }
             Ok(repo_registry) => repo_registry,
@@ -145,7 +145,7 @@ async fn download_one_repo<'a>(rapid_store: &RapidStore<'_>, repo: &str) {
     let repo = match repo_registry.into_iter().find(|r| r.name == repo) {
         Some(repo) => repo,
         None => {
-            println!("No such repository: {}", repo);
+            println!("No such repository: {repo}");
             return;
         }
     };
@@ -153,7 +153,7 @@ async fn download_one_repo<'a>(rapid_store: &RapidStore<'_>, repo: &str) {
     match download::download_repo(rapid_store, &repo).await {
         Ok(()) => println!("Download success"),
         Err(err) => {
-            println!("Failed to download repository: {}", err);
+            println!("Failed to download repository: {err}");
         }
     }
 }
@@ -162,7 +162,7 @@ async fn download_all_repos<'a>(rapid_store: &RapidStore<'_>) {
     match download::download_all_repos(rapid_store).await {
         Ok(()) => {}
         Err(err) => {
-            println!("Failed to download all repositories: {}", err);
+            println!("Failed to download all repositories: {err}");
         }
     }
 }

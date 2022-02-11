@@ -42,7 +42,7 @@ impl<'a> RapidStore<'a> {
             http_split = repo.url.split("https://").collect();
         }
         let name = http_split[1];
-        self.root_folder.join(format!("rapid/{}/version.gz", name))
+        self.root_folder.join(format!("rapid/{name}/version.gz"))
     }
 
     pub fn get_sdp_path(&self, sdp: &Sdp) -> path::PathBuf {
@@ -51,7 +51,7 @@ impl<'a> RapidStore<'a> {
 
     pub fn get_sdp_path_from_md5(&self, sdp_md5: &str) -> path::PathBuf {
         self.root_folder
-            .join(path::PathBuf::from(format!("packages/{}.sdp", sdp_md5)))
+            .join(path::PathBuf::from(format!("packages/{sdp_md5}.sdp")))
     }
 
     pub fn get_pool_path(&self, sdp_package: &SdpPackage) -> path::PathBuf {

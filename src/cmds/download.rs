@@ -3,6 +3,8 @@ use crate::{
     rapid::{self, rapid_store::RapidStore, types::Repo},
 };
 
+use serde::{Deserialize, Serialize};
+
 pub async fn download<'a>(rapid_store: &RapidStore<'_>, repo_tag: &str) {
     let repo_tag = repo_tag.split(':').collect::<Vec<&str>>();
     let repo_basename = repo_tag[0];
@@ -48,6 +50,17 @@ pub async fn download<'a>(rapid_store: &RapidStore<'_>, repo_tag: &str) {
 }
 
 async fn query_repo(rapid_store: &RapidStore<'_>, repo_basename: &str) -> Option<Repo> {
+    if true {
+        query_repo_through_registry(rapid_store, repo_basename).await
+    } else {
+        query_repo_with_api(repo_basename).await
+    }
+}
+
+async fn query_repo_through_registry(
+    rapid_store: &RapidStore<'_>,
+    repo_basename: &str,
+) -> Option<Repo> {
     // if !rapid_store.get_registry_path().exists() {
     download::download_repo_registry(rapid_store)
         .await
@@ -65,6 +78,27 @@ async fn query_repo(rapid_store: &RapidStore<'_>, repo_basename: &str) -> Option
     repo_registry.into_iter().find(|r| r.name == repo_basename)
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+struct RepoAPI {
+    pub id: i32,
+    pub name: String,
+    pub url: String,
+}
+
+async fn query_repo_with_api(repo_basename: &str) -> Option<Repo> {
+    let resp = reqwest::get(format!("http://localhost:8080/repo/{repo_basename}"))
+        .await
+        .unwrap()
+        .json::<RepoAPI>()
+        .await
+        .unwrap();
+
+    Some(Repo {
+        name: resp.name,
+        url: resp.url,
+    })
+}
+
 #[cfg(test)]
 
 mod tests {
@@ -78,6 +112,14 @@ mod tests {
             root_folder: &util::default_spring_dir(),
         };
         let repo = query_repo(&rapid_store, "byar").await.unwrap();
+        assert_eq!(repo.name, "byar");
+        assert_eq!(repo.url, "https://repos.springrts.com/byar");
+    }
+
+    #[tokio::test]
+    #[ignore] // Need to have the local server
+    async fn test_query_with_api() {
+        let repo = query_repo_with_api("byar").await.unwrap();
         assert_eq!(repo.name, "byar");
         assert_eq!(repo.url, "https://repos.springrts.com/byar");
     }

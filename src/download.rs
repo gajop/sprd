@@ -17,21 +17,6 @@ use super::rapid::{
     types::{Repo, Sdp, SdpPackage},
 };
 
-fn get_next_dl_file(
-    rapid_store: &RapidStore<'_>,
-    files: &[SdpPackage],
-    start_index: usize,
-) -> Option<usize> {
-    for (i, file) in files.iter().enumerate().skip(start_index) {
-        let file_path = rapid_store.get_pool_path(file);
-        if !file_path.exists() {
-            return Some(i);
-        }
-    }
-
-    None
-}
-
 pub async fn download_sdp_files(
     rapid_store: &RapidStore<'_>,
     repo: &Repo,
@@ -147,6 +132,21 @@ pub async fn download_sdp_files(
     }
 
     Ok(())
+}
+
+fn get_next_dl_file(
+    rapid_store: &RapidStore<'_>,
+    files: &[SdpPackage],
+    start_index: usize,
+) -> Option<usize> {
+    for (i, file) in files.iter().enumerate().skip(start_index) {
+        let file_path = rapid_store.get_pool_path(file);
+        if !file_path.exists() {
+            return Some(i);
+        }
+    }
+
+    None
 }
 
 pub async fn download_sdp(

@@ -1,5 +1,5 @@
 use crate::{
-    download,
+    file_download,
     rapid::{self, rapid_store::RapidStore},
 };
 
@@ -28,7 +28,7 @@ async fn download_one_repo<'a>(rapid_store: &RapidStore<'_>, repo: &str) {
         }
     };
 
-    match download::download_repo(rapid_store, &repo).await {
+    match file_download::download_repo(rapid_store, &repo).await {
         Ok(()) => println!("Download success"),
         Err(err) => {
             println!("Failed to download repository: {err}");
@@ -37,7 +37,7 @@ async fn download_one_repo<'a>(rapid_store: &RapidStore<'_>, repo: &str) {
 }
 
 async fn download_all_repos<'a>(rapid_store: &RapidStore<'_>) {
-    match download::download_all_repos(rapid_store).await {
+    match file_download::download_all_repos(rapid_store).await {
         Ok(()) => {}
         Err(err) => {
             println!("Failed to download all repositories: {err}");

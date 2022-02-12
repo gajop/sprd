@@ -7,7 +7,7 @@ use clap::{Parser, Subcommand};
 
 mod api;
 mod cmds;
-mod download;
+mod file_download;
 mod gz;
 mod rapid;
 mod util;

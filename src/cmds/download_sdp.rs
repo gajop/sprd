@@ -1,5 +1,5 @@
 use crate::{
-    download,
+    file_download,
     rapid::{self, rapid_store::RapidStore},
 };
 
@@ -42,7 +42,7 @@ pub async fn download_sdp<'a>(rapid_store: &RapidStore<'_>, sdp_md5: &str) {
         }
     };
 
-    match download::download_sdp(rapid_store, &repo, &sdp).await {
+    match file_download::download_sdp(rapid_store, &repo, &sdp).await {
         Ok(()) => {}
         Err(err) => println!("Failed to update registry: {err}"),
     }

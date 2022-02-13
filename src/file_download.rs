@@ -39,7 +39,7 @@ pub async fn download_sdp_files_with_url(
     sdp_files: &[SdpPackage],
 ) -> Result<(), Box<dyn Error>> {
     assert_ne!(sdp_files.len(), 0);
-    assert_ne!(download_map.iter().sum::<u8>(), 0);
+    assert!(download_map.iter().any(|f| *f != 0));
     let gzipped = gz::gzip_data(download_map.as_slice())?;
 
     let https = HttpsConnector::new();

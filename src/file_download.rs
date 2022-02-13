@@ -92,7 +92,7 @@ pub async fn download_sdp_files_with_url(
             .progress_chars("#>-"),
     );
 
-    while let Some(next) = res.data().await {
+    'top_loop: while let Some(next) = res.data().await {
         let chunk = next?;
         downloaded_size += chunk.len();
 
@@ -122,7 +122,10 @@ pub async fn download_sdp_files_with_url(
                 chunk_index += read_chunk;
 
                 if file_read_size == size as usize {
-                    file_index = get_next_dl_file(rapid_store, sdp_files, file_index + 1).unwrap();
+                    file_index = match get_next_dl_file(rapid_store, sdp_files, file_index + 1) {
+                        Some(index) => index,
+                        None => break 'top_loop,
+                    };
                     sdp_file = &sdp_files[file_index];
 
                     dest = rapid_store.get_pool_path(sdp_file);

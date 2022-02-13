@@ -12,7 +12,7 @@ pub struct Sdp {
     pub alias: String,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq)]
 pub struct SdpPackage {
     pub name: String,
     pub md5: [char; 32],

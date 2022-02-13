@@ -208,6 +208,12 @@ mod tests {
         let repo = query_repo_with_api(LOCAL_API_SERVER, "byar").await.unwrap();
         assert_eq!(repo.name, "byar");
         assert_eq!(repo.url, "https://repos.springrts.com/byar");
+
+        let rapid_store = rapid::rapid_store::RapidStore {
+            root_folder: &util::default_spring_dir(),
+        };
+        let repo_with_file = query_repo_with_file(&rapid_store, "byar").await.unwrap();
+        assert_eq!(repo, repo_with_file);
     }
 
     #[tokio::test]
@@ -232,11 +238,10 @@ mod tests {
             root_folder: &util::default_spring_dir(),
         };
         let repo = query_repo_with_file(&rapid_store, "sbc").await.unwrap();
-        let sdp_classic = query_sdp_with_file(&rapid_store, &repo, "test")
+        let sdp_file = query_sdp_with_file(&rapid_store, &repo, "test")
             .await
             .unwrap();
 
-        assert_eq!(sdp.md5, sdp_classic.md5);
-        // assert_eq!(sdp, sdp_classic);
+        assert_eq!(sdp, sdp_file);
     }
 }

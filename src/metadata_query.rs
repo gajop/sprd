@@ -66,7 +66,6 @@ pub async fn query_sdp_files(rapid_store: &RapidStore, repo: &Repo, sdp: &Sdp) -
 async fn query_sdp_repo_with_file(rapid_store: &RapidStore, fullname: &str) -> (Repo, Sdp) {
     let repo_tag = fullname.split(':').collect::<Vec<&str>>();
     let repo_basename = repo_tag[0];
-    let tag = repo_tag[1];
 
     let repo = query_repo_with_file(rapid_store, repo_basename)
         .await

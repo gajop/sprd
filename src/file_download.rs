@@ -38,6 +38,8 @@ pub async fn download_sdp_files_with_url(
     download_map: Vec<u8>,
     sdp_files: &[SdpPackage],
 ) -> Result<(), Box<dyn Error>> {
+    assert_ne!(sdp_files.len(), 0);
+    assert_ne!(download_map.iter().sum::<u8>(), 0);
     let gzipped = gz::gzip_data(download_map.as_slice())?;
 
     let https = HttpsConnector::new();
@@ -65,8 +67,6 @@ pub async fn download_sdp_files_with_url(
         .unwrap();
     let total_size = total_size.parse::<i64>().unwrap();
 
-    // Stream the body, writing each chunk to stdout as we get it
-    // (instead of buffering and printing at the end).
     let mut downloaded_size = 0;
     let mut size_bytes: [u8; 4] = [0; 4];
     let mut size = 0;
@@ -76,11 +76,11 @@ pub async fn download_sdp_files_with_url(
     let mut sdp_file = &sdp_files[file_index];
 
     let mut dest = rapid_store.get_pool_path(sdp_file);
-    std::fs::create_dir_all(dest.parent().unwrap())?;
+    std::fs::create_dir_all(dest.parent().expect("No parent directory"))?;
     let mut file = File::create(dest).await?;
     let mut file_read_size = 0;
 
-    const LENGHT_SIZE: usize = 4;
+    const LENGTH_SIZE: usize = 4;
 
     let pb_template: String =
         "{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes} ({eta})"
@@ -100,15 +100,15 @@ pub async fn download_sdp_files_with_url(
         while chunk_index < chunk.len() {
             let chunk_remaining = chunk.len() - chunk_index;
 
-            if read_amount < LENGHT_SIZE {
-                let read_chunk = chunk_remaining.min(LENGHT_SIZE - read_amount);
+            if read_amount < LENGTH_SIZE {
+                let read_chunk = chunk_remaining.min(LENGTH_SIZE - read_amount);
                 for i in 0..read_chunk {
                     size_bytes[read_amount + i] = chunk[chunk_index + i];
                 }
                 read_amount += read_chunk;
                 chunk_index += read_chunk;
 
-                if read_amount == LENGHT_SIZE {
+                if read_amount == LENGTH_SIZE {
                     size = u32::from_be_bytes(size_bytes);
                     // println!("File size: {}", size);
                 }

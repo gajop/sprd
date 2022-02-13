@@ -140,6 +140,7 @@ pub async fn download_sdp_files_with_url(
 
         pb.set_position(downloaded_size as u64);
     }
+    pb.finish_with_message("downloaded");
 
     Ok(())
 }

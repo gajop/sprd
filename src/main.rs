@@ -50,7 +50,10 @@ async fn main() {
             cmds::check_sdp(&rapid_store, sdp);
         }
         Commands::Download { tag } => {
-            cmds::download(&rapid_store, tag).await;
+            let opts = cmds::download::DownloadOptions {
+                metadata_source: cmds::download::MetadataSource::FileApi,
+            };
+            cmds::download(&rapid_store, &opts, tag).await;
         }
         Commands::DownloadSdp { sdp } => {
             cmds::download_sdp(&rapid_store, sdp).await;

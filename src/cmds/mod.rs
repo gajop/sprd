@@ -1,8 +1,8 @@
-mod check_sdp;
-mod download;
-mod download_registry;
-mod download_repo;
-mod download_sdp;
+pub mod check_sdp;
+pub mod download;
+pub mod download_registry;
+pub mod download_repo;
+pub mod download_sdp;
 
 pub use check_sdp::check_sdp;
 pub use download::download;

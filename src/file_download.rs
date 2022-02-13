@@ -4,6 +4,7 @@ use std::str::FromStr;
 
 use hyper::body::HttpBody;
 use hyper::http::Request;
+use hyper::Uri;
 use hyper_tls::HttpsConnector;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
@@ -18,7 +19,7 @@ use super::rapid::{
 };
 
 pub async fn download_sdp_files(
-    rapid_store: &RapidStore<'_>,
+    rapid_store: &RapidStore,
     repo: &Repo,
     sdp: &Sdp,
     download_map: Vec<u8>,
@@ -28,6 +29,15 @@ pub async fn download_sdp_files(
     let url = url.parse::<hyper::Uri>().unwrap();
     // println!("{url}");
 
+    download_sdp_files_with_url(rapid_store, &url, download_map, sdp_files).await
+}
+
+pub async fn download_sdp_files_with_url(
+    rapid_store: &RapidStore,
+    url: &Uri,
+    download_map: Vec<u8>,
+    sdp_files: &[SdpPackage],
+) -> Result<(), Box<dyn Error>> {
     let gzipped = gz::gzip_data(download_map.as_slice())?;
 
     let https = HttpsConnector::new();
@@ -135,7 +145,7 @@ pub async fn download_sdp_files(
 }
 
 fn get_next_dl_file(
-    rapid_store: &RapidStore<'_>,
+    rapid_store: &RapidStore,
     files: &[SdpPackage],
     start_index: usize,
 ) -> Option<usize> {
@@ -150,7 +160,7 @@ fn get_next_dl_file(
 }
 
 pub async fn download_sdp(
-    rapid_store: &RapidStore<'_>,
+    rapid_store: &RapidStore,
     repo: &Repo,
     sdp: &Sdp,
 ) -> Result<(), Box<dyn Error>> {
@@ -160,7 +170,7 @@ pub async fn download_sdp(
     download_file(url, &dest, "Downloading SDP").await
 }
 
-pub async fn download_all_repos(rapid_store: &RapidStore<'_>) -> Result<(), Box<dyn Error>> {
+pub async fn download_all_repos(rapid_store: &RapidStore) -> Result<(), Box<dyn Error>> {
     let registry_file = rapid_store.get_registry_path();
     let repos = parse_repos_from_file(&registry_file)?;
     for repo in repos {
@@ -170,10 +180,7 @@ pub async fn download_all_repos(rapid_store: &RapidStore<'_>) -> Result<(), Box<
     Ok(())
 }
 
-pub async fn download_repo(
-    rapid_store: &RapidStore<'_>,
-    repo: &Repo,
-) -> Result<(), Box<dyn Error>> {
+pub async fn download_repo(rapid_store: &RapidStore, repo: &Repo) -> Result<(), Box<dyn Error>> {
     let repo_file = rapid_store.get_repo_path(repo);
     let versions_url = repo.url.to_owned() + "/versions.gz";
 
@@ -181,7 +188,7 @@ pub async fn download_repo(
     download_file(url, &repo_file, "Downloading repository").await
 }
 
-pub async fn download_repo_registry(rapid_store: &RapidStore<'_>) -> Result<(), Box<dyn Error>> {
+pub async fn download_repo_registry(rapid_store: &RapidStore) -> Result<(), Box<dyn Error>> {
     let url = hyper::Uri::from_static("https://repos.springrts.com/repos.gz");
     let registry_file = rapid_store.get_registry_path();
     download_file(url, &registry_file, "Downloading registry").await

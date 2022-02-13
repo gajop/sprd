@@ -3,14 +3,14 @@ use crate::{
     rapid::{self, rapid_store::RapidStore},
 };
 
-pub async fn download_repo<'a>(rapid_store: &RapidStore<'_>, repo: Option<&str>) {
+pub async fn download_repo<'a>(rapid_store: &RapidStore, repo: Option<&str>) {
     match repo {
         Some(repo) => download_one_repo(rapid_store, repo).await,
         None => download_all_repos(rapid_store).await,
     };
 }
 
-async fn download_one_repo<'a>(rapid_store: &RapidStore<'_>, repo: &str) {
+async fn download_one_repo<'a>(rapid_store: &RapidStore, repo: &str) {
     let repo_registry =
         match rapid::parsing::parse_repos_from_file(&rapid_store.get_registry_path()) {
             Err(err) => {
@@ -36,7 +36,7 @@ async fn download_one_repo<'a>(rapid_store: &RapidStore<'_>, repo: &str) {
     }
 }
 
-async fn download_all_repos<'a>(rapid_store: &RapidStore<'_>) {
+async fn download_all_repos<'a>(rapid_store: &RapidStore) {
     match file_download::download_all_repos(rapid_store).await {
         Ok(()) => {}
         Err(err) => {

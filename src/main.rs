@@ -3,12 +3,14 @@
 
 use std::path::PathBuf;
 
+use api::DownloadOptions;
 use clap::{Parser, Subcommand};
 
 mod api;
 mod cmds;
 mod file_download;
 mod gz;
+mod metadata_query;
 mod rapid;
 mod util;
 
@@ -41,19 +43,14 @@ async fn main() {
     let args = Args::parse();
 
     let root_folder = args.root_folder.unwrap_or_else(util::default_spring_dir);
-    let rapid_store = rapid::rapid_store::RapidStore {
-        root_folder: &root_folder,
-    };
+    let rapid_store = rapid::rapid_store::RapidStore { root_folder };
 
     match &args.command {
         Commands::CheckSdp { sdp } => {
             cmds::check_sdp(&rapid_store, sdp);
         }
         Commands::Download { tag } => {
-            let opts = cmds::download::DownloadOptions {
-                metadata_source: cmds::download::MetadataSource::FileApi,
-            };
-            cmds::download(&rapid_store, &opts, tag).await;
+            cmds::download(&rapid_store, &DownloadOptions::default(), tag).await;
         }
         Commands::DownloadSdp { sdp } => {
             cmds::download_sdp(&rapid_store, sdp).await;

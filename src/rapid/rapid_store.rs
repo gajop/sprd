@@ -1,14 +1,23 @@
 use std::error::Error;
-use std::path;
+use std::path::{self, PathBuf};
 
+use super::super::util;
 use super::parsing::read_rapid_from_file;
 use super::types::{Repo, Sdp, SdpPackage};
 
-pub struct RapidStore<'a> {
-    pub root_folder: &'a path::Path,
+pub struct RapidStore {
+    pub root_folder: PathBuf,
 }
 
-impl<'a> RapidStore<'a> {
+impl Default for RapidStore {
+    fn default() -> Self {
+        RapidStore {
+            root_folder: util::default_spring_dir(),
+        }
+    }
+}
+
+impl RapidStore {
     // pub fn find_repo(&self, name: &str) -> Result<Option<Repo>, Box<dyn Error>> {
     //     let repos = parse_repos_from_file(&self.get_repo_path(name))?;
     //     Ok(repos.into_iter().find(|repo| repo.name.contains(name)))
@@ -22,10 +31,10 @@ impl<'a> RapidStore<'a> {
         let sdps = read_rapid_from_file(&repo_path)?;
         Ok(sdps
             .into_iter()
-            .find(|sdp| sdp.fullname.contains(name) || sdp.alias.contains(name)))
+            .find(|sdp| sdp.fullname == name || sdp.alias == name))
     }
 
-    pub fn find_nonexisting_files(&self, sdp_files: Vec<SdpPackage>) -> Vec<SdpPackage> {
+    pub fn find_missing_files(&self, sdp_files: Vec<SdpPackage>) -> Vec<SdpPackage> {
         sdp_files
             .into_iter()
             .filter(|sdp_file| !self.get_pool_path(sdp_file).exists())
@@ -65,7 +74,7 @@ impl<'a> RapidStore<'a> {
         file_path
     }
 
-    pub fn get_nonexisting_files_download_map(&self, sdp_files: &[SdpPackage]) -> Vec<u8> {
+    pub fn get_missing_files_indices(&self, sdp_files: &[SdpPackage]) -> Vec<u8> {
         let map_length = sdp_files.len() / 8 + 1;
         let mut download_map: Vec<u8> = vec![0; map_length];
 
@@ -78,5 +87,28 @@ impl<'a> RapidStore<'a> {
         }
 
         download_map
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[ignore]
+    fn test_find_sdp() {
+        let rapid_store = RapidStore::default();
+        let sdp = rapid_store
+            .find_sdp(
+                &Repo {
+                    name: "sbc".to_owned(),
+                    url: "-unused-".to_owned(),
+                },
+                "sbc:git:860aac5eb5ce292121b741ca8514516777ae14dc",
+            )
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(sdp.md5, "d80d786597510d1358be3b04a7e9146e");
     }
 }

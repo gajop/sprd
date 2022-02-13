@@ -16,7 +16,7 @@ impl<'a> RapidStore<'a> {
 
     pub fn find_sdp(&self, repo: &Repo, name: &str) -> Result<Option<Sdp>, Box<dyn Error>> {
         let repo_path = self.root_folder.join(&format!(
-            "rapid/repos.springrts.com/{}/version.gz",
+            "rapid/repos.springrts.com/{}/versions.gz",
             repo.name
         ));
         let sdps = read_rapid_from_file(&repo_path)?;
@@ -42,7 +42,7 @@ impl<'a> RapidStore<'a> {
             http_split = repo.url.split("https://").collect();
         }
         let name = http_split[1];
-        self.root_folder.join(format!("rapid/{name}/version.gz"))
+        self.root_folder.join(format!("rapid/{name}/versions.gz"))
     }
 
     pub fn get_sdp_path(&self, sdp: &Sdp) -> path::PathBuf {

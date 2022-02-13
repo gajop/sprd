@@ -48,15 +48,15 @@ pub async fn query_sdp(
 }
 
 pub async fn query_sdp_files(rapid_store: &RapidStore, repo: &Repo, sdp: &Sdp) -> Vec<SdpPackage> {
-    // if !dest_sdp.exists() {
-    match file_download::download_sdp(rapid_store, repo, sdp).await {
-        Ok(_) => {}
-        Err(err) => {
-            panic!("Failed to download SDP: {err}");
+    let dest_sdp = rapid_store.get_sdp_path(sdp);
+    if !dest_sdp.exists() {
+        match file_download::download_sdp(rapid_store, repo, sdp).await {
+            Ok(_) => {}
+            Err(err) => {
+                panic!("Failed to download SDP: {err}");
+            }
         }
     }
-    // }
-    let dest_sdp = rapid_store.get_sdp_path(sdp);
     assert!(dest_sdp.exists());
 
     rapid::parsing::load_sdp_packages_from_file(&dest_sdp)
@@ -179,6 +179,12 @@ async fn query_sdp_with_api(server: &str, fullname: &str) -> (Repo, Sdp) {
 mod tests {
     const LOCAL_API_SERVER: &str = "http://localhost:8080";
 
+    use std::{
+        collections::HashSet,
+        fs,
+        path::{Path, PathBuf},
+    };
+
     use crate::api;
 
     use super::*;
@@ -244,5 +250,73 @@ mod tests {
         .await;
 
         assert_eq!(sdp.md5, "d80d786597510d1358be3b04a7e9146e");
+    }
+
+    #[tokio::test]
+    #[ignore]
+    async fn test_query_sdp_files() {
+        let rapid_store = rapid::rapid_store::RapidStore::default();
+        let (repo, sdp) = query_metadata(
+            &rapid_store,
+            &api::DownloadOptions::default(),
+            "sbc:git:860aac5eb5ce292121b741ca8514516777ae14dc",
+        )
+        .await;
+
+        let mut sprd_files = HashSet::new();
+
+        let sdp_files = query_sdp_files(&rapid_store, &repo, &sdp).await;
+        for sdp_file in sdp_files.iter() {
+            let dest = rapid_store.get_pool_path(sdp_file);
+            sprd_files.insert(format!(
+                "{}{}",
+                dest.parent()
+                    .unwrap()
+                    .file_name()
+                    .unwrap()
+                    .to_str()
+                    .unwrap(),
+                dest.file_name().unwrap().to_str().unwrap()
+            ));
+        }
+
+        let folders = list_files(Path::new("test_folders/test_sprd/pool/"));
+        let prd_files: HashSet<String> = folders
+            .iter()
+            .map(|dir| list_files(dir))
+            .flatten()
+            .map(|f| {
+                format!(
+                    "{}{}",
+                    f.parent().unwrap().file_name().unwrap().to_str().unwrap(),
+                    f.file_name().unwrap().to_str().unwrap()
+                )
+            })
+            .collect();
+
+        let mut missing_sprd = 0;
+        let mut missing_prd = 0;
+        for sprd in sprd_files.iter() {
+            if !prd_files.contains(sprd) {
+                missing_prd += 1;
+                println!("Extra: {}", sprd);
+            }
+        }
+        for prd in prd_files.iter() {
+            if !sprd_files.contains(prd) {
+                missing_sprd += 1;
+                println!("Missing: {}", prd);
+            }
+        }
+        assert!(missing_prd == 0 && missing_sprd == 0);
+    }
+
+    fn list_files(path: &Path) -> Vec<PathBuf> {
+        let mut files: Vec<PathBuf> = fs::read_dir(path)
+            .unwrap()
+            .map(|file| file.unwrap().path())
+            .collect();
+        files.sort();
+        files
     }
 }

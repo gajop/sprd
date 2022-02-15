@@ -1,5 +1,4 @@
 use std::error::Error;
-use std::fmt::Write;
 use std::path;
 use std::str;
 use std::u32;
@@ -78,20 +77,17 @@ pub fn load_sdp_packages(data: &[u8]) -> Result<Vec<SdpPackage>, Box<dyn Error>>
         size.copy_from_slice(&data[index..index + 4]);
         index += 4;
 
-        let mut md5 = String::new();
-        for byte in md5_bin {
-            write!(md5, "{:02x}", byte)?;
-        }
-
         let mut sdp_file = SdpPackage {
             name: name.to_owned(),
             ..Default::default()
         };
         sdp_file.name = name.to_owned();
+        for (i, byte) in md5_bin.iter().enumerate() {
+            let hex = format!("{:02x}", byte);
+            sdp_file.md5[2 * i..=2 * i + 1].copy_from_slice(hex.as_bytes());
+        }
+        sdp_file.md5_bin.copy_from_slice(md5_bin);
         sdp_file.crc32.copy_from_slice(crc32);
-
-        let md5_chars: Vec<char> = md5.chars().collect();
-        sdp_file.md5[..md5_chars.len()].clone_from_slice(&md5_chars[..]);
         sdp_file.size = u32::from_le_bytes(size);
 
         sdp_files.push(sdp_file);

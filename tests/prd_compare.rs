@@ -111,5 +111,17 @@ fn assert_file_identity(path1: &Path, path2: &Path) {
         .collect::<Vec<OsString>>();
     names2.sort();
 
+    if names1 != names2 {
+        for n1 in names1.iter() {
+            if !names2.contains(n1) {
+                println!("Second doesn't contain: {n1:?}");
+            }
+        }
+        for n2 in names2.iter() {
+            if !names1.contains(n2) {
+                println!("First doesn't contain: {n2:?}");
+            }
+        }
+    }
     assert_eq!(names1, names2);
 }

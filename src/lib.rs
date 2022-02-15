@@ -1,7 +1,8 @@
+pub mod api;
 pub mod cmds;
 pub mod rapid;
+pub mod validation;
 
-pub mod api;
 mod file_download;
 mod gz;
 mod metadata_query;

@@ -15,7 +15,8 @@ pub struct Sdp {
 #[derive(Debug, Default, PartialEq)]
 pub struct SdpPackage {
     pub name: String,
-    pub md5: [char; 32],
+    pub md5: [u8; 32],
+    pub md5_bin: [u8; 16],
     pub crc32: [u8; 4],
     pub size: u32,
 }

@@ -1,7 +1,6 @@
 use crate::{
-    api::{check_if_sdp_needs_download, DownloadOptions},
-    file_download, metadata_query,
-    rapid::rapid_store::RapidStore,
+    api::DownloadOptions, file_download, metadata_query, rapid::rapid_store::RapidStore,
+    validation::check_if_sdp_needs_download,
 };
 
 pub async fn download<'a>(rapid_store: &RapidStore, opts: &DownloadOptions, fullname: &str) {

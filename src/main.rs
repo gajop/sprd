@@ -13,6 +13,7 @@ mod gz;
 mod metadata_query;
 mod rapid;
 mod util;
+mod validation;
 
 #[derive(Parser)]
 #[clap(author, version, about, long_about = "Rapid client")]

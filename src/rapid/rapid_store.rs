@@ -66,9 +66,9 @@ impl RapidStore {
     pub fn get_pool_path(&self, sdp_package: &SdpPackage) -> path::PathBuf {
         let file_path = self.root_folder.join(format!(
             "pool/{}{}/{}.gz",
-            sdp_package.md5[0],
-            sdp_package.md5[1],
-            &sdp_package.md5[2..32].iter().collect::<String>()
+            sdp_package.md5[0] as char,
+            sdp_package.md5[1] as char,
+            std::str::from_utf8(&sdp_package.md5[2..32]).unwrap()
         ));
 
         file_path

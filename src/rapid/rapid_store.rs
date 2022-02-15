@@ -34,11 +34,11 @@ impl RapidStore {
             .find(|sdp| sdp.fullname == name || sdp.alias == name))
     }
 
-    pub fn find_missing_files(&self, sdp_files: Vec<SdpPackage>) -> Vec<SdpPackage> {
+    pub fn find_missing_files<'a>(&self, sdp_files: &'a Vec<SdpPackage>) -> Vec<&'a SdpPackage> {
         sdp_files
-            .into_iter()
+            .iter()
             .filter(|sdp_file| !self.get_pool_path(sdp_file).exists())
-            .collect()
+            .collect::<Vec<&SdpPackage>>()
     }
 
     pub fn get_registry_path(&self) -> path::PathBuf {

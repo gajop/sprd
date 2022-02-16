@@ -1,10 +1,5 @@
-pub mod metadata_query {
-    // This seems silly?
-    pub use super::super::metadata_query::*;
-}
-
 pub enum MetadataSource {
-    // File(str),
+    Local,
     FileApi,
     RestApi(String),
 }

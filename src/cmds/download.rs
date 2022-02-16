@@ -1,12 +1,12 @@
 use crate::{
-    api::DownloadOptions, file_download, metadata_query, rapid::rapid_store::RapidStore,
+    api::DownloadOptions, file_download, metadata, rapid::rapid_store::RapidStore,
     validation::check_if_sdp_needs_download,
 };
 
 pub async fn download<'a>(rapid_store: &RapidStore, opts: &DownloadOptions, fullname: &str) {
-    let (repo, sdp) = metadata_query::query_metadata(rapid_store, opts, fullname).await;
+    let (repo, sdp) = metadata::query_metadata(rapid_store, opts, fullname).await;
 
-    let sdp_files = metadata_query::query_sdp_files(rapid_store, &repo, &sdp).await;
+    let sdp_files = metadata::query_sdp_files(rapid_store, &repo, &sdp).await;
 
     if !check_if_sdp_needs_download(rapid_store, &sdp.md5) {
         return;

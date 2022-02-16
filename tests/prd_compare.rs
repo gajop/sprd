@@ -29,7 +29,6 @@ fn setup_prd_folders() {
 }
 
 #[tokio::test]
-#[ignore] // Need to have pr-downloader installed
 async fn test_file_api() {
     setup_prd_folders();
 
@@ -44,7 +43,6 @@ async fn test_file_api() {
     .await;
 }
 
-#[ignore]
 #[tokio::test]
 async fn test_folder_equality() {
     assert_files_equal(

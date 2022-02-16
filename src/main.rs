@@ -10,7 +10,7 @@ mod api;
 mod cmds;
 mod file_download;
 mod gz;
-mod metadata_query;
+mod metadata;
 mod rapid;
 mod util;
 mod validation;

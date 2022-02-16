@@ -1,9 +1,6 @@
 use md5::{Digest, Md5};
 
-use crate::{
-    api::{metadata_query, DownloadOptions},
-    rapid::rapid_store::RapidStore,
-};
+use crate::{api::DownloadOptions, metadata, rapid::rapid_store::RapidStore};
 
 use super::rapid::{parsing, rapid_store};
 
@@ -57,7 +54,7 @@ pub fn check_if_sdp_needs_download(rapid_store: &rapid_store::RapidStore, md5: &
 
 pub async fn check_if_tag_is_valid(rapid_store: &RapidStore, fullname: &str) -> bool {
     let (_, sdp) =
-        metadata_query::query_metadata(rapid_store, &DownloadOptions::default(), fullname).await;
+        metadata::query_metadata(rapid_store, &DownloadOptions::default(), fullname).await;
 
     !check_if_sdp_needs_download(rapid_store, &sdp.md5)
 }

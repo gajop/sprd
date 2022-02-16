@@ -111,7 +111,6 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn test_query_metadata() {
-        let rapid_store = rapid::rapid_store::RapidStore::default();
         let (_, sdp) = query_metadata(
             LOCAL_API_SERVER,
             "sbc:git:860aac5eb5ce292121b741ca8514516777ae14dc",

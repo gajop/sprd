@@ -52,9 +52,12 @@ pub fn check_if_sdp_needs_download(rapid_store: &rapid_store::RapidStore, md5: &
     false
 }
 
-pub async fn check_if_tag_is_valid(rapid_store: &RapidStore, fullname: &str) -> bool {
-    let (_, sdp) =
-        metadata::query_metadata(rapid_store, &DownloadOptions::default(), fullname).await;
+pub async fn check_if_tag_is_valid(
+    rapid_store: &RapidStore,
+    opts: &DownloadOptions,
+    fullname: &str,
+) -> bool {
+    let (_, sdp) = metadata::query_metadata(rapid_store, opts, fullname).await;
 
     !check_if_sdp_needs_download(rapid_store, &sdp.md5)
 }
@@ -63,7 +66,7 @@ pub async fn check_if_tag_is_valid(rapid_store: &RapidStore, fullname: &str) -> 
 mod tests {
     use std::path::PathBuf;
 
-    use crate::rapid;
+    use crate::{api::MetadataSource, rapid};
 
     use super::*;
 
@@ -78,7 +81,6 @@ mod tests {
         assert!(check_if_sdp_needs_download(&rapid_store, ""));
     }
 
-    #[ignore]
     #[tokio::test]
     async fn check_prd_tag() {
         let rapid_store = rapid::rapid_store::RapidStore {
@@ -87,13 +89,15 @@ mod tests {
         assert!(
             check_if_tag_is_valid(
                 &rapid_store,
+                &DownloadOptions {
+                    metadata_source: MetadataSource::Local
+                },
                 "sbc:git:860aac5eb5ce292121b741ca8514516777ae14dc",
             )
             .await
         );
     }
 
-    #[ignore]
     #[tokio::test]
     async fn check_sprd_tag() {
         let rapid_store = rapid::rapid_store::RapidStore {
@@ -102,6 +106,9 @@ mod tests {
         assert!(
             check_if_tag_is_valid(
                 &rapid_store,
+                &DownloadOptions {
+                    metadata_source: MetadataSource::Local
+                },
                 "sbc:git:860aac5eb5ce292121b741ca8514516777ae14dc",
             )
             .await

@@ -42,7 +42,7 @@ pub async fn query_repo(
 }
 
 pub async fn query_sdp(rapid_store: &RapidStore, repo: &Repo, fullname: &str) -> Option<Sdp> {
-    let sdp = match rapid_store.find_sdp(repo, fullname) {
+    return match rapid_store.find_sdp(repo, fullname) {
         Err(err) => {
             println!(
                 "Failed to load sdp: (repo: {}) (fullname: {}). Error: {}",
@@ -50,7 +50,7 @@ pub async fn query_sdp(rapid_store: &RapidStore, repo: &Repo, fullname: &str) ->
             );
             return None;
         }
-        Ok(sdp) => return sdp,
+        Ok(sdp) => sdp,
     };
 }
 

@@ -3,17 +3,8 @@
 
 use std::path::PathBuf;
 
-use api::DownloadOptions;
 use clap::{Parser, Subcommand};
-
-mod api;
-mod cmds;
-mod file_download;
-mod gz;
-mod metadata;
-mod rapid;
-mod util;
-mod validation;
+use sprd::{api::DownloadOptions, cmds, rapid};
 
 #[derive(Parser)]
 #[clap(author, version, about, long_about = "Rapid client")]
@@ -43,8 +34,10 @@ enum Commands {
 async fn main() {
     let args = Args::parse();
 
-    let root_folder = args.root_folder.unwrap_or_else(util::default_spring_dir);
-    let rapid_store = rapid::rapid_store::RapidStore { root_folder };
+    let rapid_store = match args.root_folder {
+        Some(path) => rapid::rapid_store::RapidStore::new(path),
+        None => rapid::rapid_store::RapidStore::default(),
+    };
 
     match &args.command {
         Commands::CheckSdp { sdp } => {

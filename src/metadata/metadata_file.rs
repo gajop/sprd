@@ -1,7 +1,6 @@
 use crate::{
     file_download,
     rapid::{
-        self,
         rapid_store::RapidStore,
         types::{Repo, Sdp, SdpPackage},
     },
@@ -19,10 +18,7 @@ pub async fn query_sdp_files(rapid_store: &RapidStore, repo: &Repo, sdp: &Sdp) -
             }
         }
     }
-    assert!(dest_sdp.exists());
-
-    rapid::parsing::load_sdp_packages_from_file(&dest_sdp)
-        .expect("Failed to load SDP Package from file")
+    metadata_local::query_sdp_files(rapid_store, sdp).await
 }
 
 pub async fn query_metadata(rapid_store: &RapidStore, fullname: &str) -> (Repo, Sdp) {
@@ -57,6 +53,8 @@ pub async fn query_sdp(rapid_store: &RapidStore, repo: &Repo, fullname: &str) ->
 #[cfg(test)]
 
 mod tests {
+
+    use crate::rapid;
 
     use super::*;
 

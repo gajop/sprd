@@ -1,7 +1,6 @@
 use crate::{
     api::{DownloadOptions, MetadataSource},
-    file_download,
-    rapid::{self, types::SdpPackage},
+    rapid::types::SdpPackage,
     rapid::{
         rapid_store::RapidStore,
         types::{Repo, Sdp},
@@ -57,27 +56,26 @@ pub async fn query_sdp(
     }
 }
 
-pub async fn query_sdp_files(rapid_store: &RapidStore, repo: &Repo, sdp: &Sdp) -> Vec<SdpPackage> {
-    let dest_sdp = rapid_store.get_sdp_path(sdp);
-    if !dest_sdp.exists() {
-        match file_download::download_sdp(rapid_store, repo, sdp).await {
-            Ok(_) => {}
-            Err(err) => {
-                panic!("Failed to download SDP: {err}");
-            }
+pub async fn query_sdp_files(
+    rapid_store: &RapidStore,
+    opts: &DownloadOptions,
+    repo: &Repo,
+    sdp: &Sdp,
+) -> Vec<SdpPackage> {
+    match &opts.metadata_source {
+        MetadataSource::Local => metadata_local::query_sdp_files(rapid_store, sdp).await,
+        MetadataSource::FileApi => metadata_file::query_sdp_files(rapid_store, repo, sdp).await,
+        MetadataSource::RestApi(_api_server) => {
+            unimplemented!("Can't query SDP files from the Rest API at this moment.");
         }
     }
-    assert!(dest_sdp.exists());
-
-    rapid::parsing::load_sdp_packages_from_file(&dest_sdp)
-        .expect("Failed to load SDP Package from file")
 }
 
 #[cfg(test)]
 
 mod tests {
 
-    use crate::api;
+    use crate::{api, rapid};
 
     use super::*;
 

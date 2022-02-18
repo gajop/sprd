@@ -18,6 +18,10 @@ impl Default for RapidStore {
 }
 
 impl RapidStore {
+    pub fn new(path: PathBuf) -> Self {
+        Self { root_folder: path }
+    }
+
     // pub fn find_repo(&self, name: &str) -> Result<Option<Repo>, Box<dyn Error>> {
     //     let repos = parse_repos_from_file(&self.get_repo_path(name))?;
     //     Ok(repos.into_iter().find(|repo| repo.name.contains(name)))
@@ -34,7 +38,7 @@ impl RapidStore {
             .find(|sdp| sdp.fullname == name || sdp.alias == name))
     }
 
-    pub fn find_missing_files<'a>(&self, sdp_files: &'a Vec<SdpPackage>) -> Vec<&'a SdpPackage> {
+    pub fn find_missing_files<'a>(&self, sdp_files: &'a [SdpPackage]) -> Vec<&'a SdpPackage> {
         sdp_files
             .iter()
             .filter(|sdp_file| !self.get_pool_path(sdp_file).exists())

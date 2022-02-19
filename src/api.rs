@@ -15,3 +15,9 @@ impl Default for DownloadOptions {
         }
     }
 }
+
+impl DownloadOptions {
+    pub fn new(metadata_source: MetadataSource) -> Self {
+        Self { metadata_source }
+    }
+}

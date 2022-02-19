@@ -18,8 +18,6 @@ struct Args {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Check if SDP is fully downloaded
-    CheckSdp { sdp: String },
     /// Download the specified rapid tag
     Download { tag: String },
     /// Download SDP
@@ -28,6 +26,13 @@ enum Commands {
     DownloadRegistry,
     /// Download the repository metadata
     DownloadRepo { repo: Option<String> },
+
+    /// Check if SDP is fully downloaded
+    CheckSdp { sdp: String },
+    /// Validate by fullname
+    Validate { fullname: String },
+    /// Fix
+    Fix { fullname: String },
 }
 
 #[tokio::main]
@@ -40,9 +45,6 @@ async fn main() {
     };
 
     match &args.command {
-        Commands::CheckSdp { sdp } => {
-            cmds::check_sdp(&rapid_store, sdp);
-        }
         Commands::Download { tag } => {
             cmds::download(&rapid_store, &DownloadOptions::default(), tag).await;
         }
@@ -54,6 +56,16 @@ async fn main() {
         }
         Commands::DownloadRepo { repo } => {
             cmds::download_repo(&rapid_store, repo.as_deref()).await;
+        }
+
+        Commands::CheckSdp { sdp } => {
+            cmds::check_sdp(&rapid_store, sdp);
+        }
+        Commands::Validate { fullname } => {
+            cmds::validate_by_fullname(&rapid_store, fullname).await;
+        }
+        Commands::Fix { fullname } => {
+            cmds::fix(&rapid_store, fullname).await;
         }
     }
 }

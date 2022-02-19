@@ -1,39 +1,40 @@
-use std::error::Error;
-
-use thiserror::Error;
-
 use crate::rapid::{
     self,
     rapid_store::RapidStore,
     types::{Repo, Sdp, SdpPackage},
 };
 
-pub async fn query_metadata(rapid_store: &RapidStore, fullname: &str) -> (Repo, Sdp) {
+use super::MetadataQueryError;
+
+pub async fn query_metadata(
+    rapid_store: &RapidStore,
+    fullname: &str,
+) -> Result<Option<(Repo, Sdp)>, MetadataQueryError> {
     let repo_tag = fullname.split(':').collect::<Vec<&str>>();
     let repo_basename = repo_tag[0];
 
-    let repo = query_repo(rapid_store, repo_basename)
-        .await
-        .unwrap()
-        .unwrap();
-    let sdp = query_sdp(rapid_store, &repo, fullname).await.unwrap();
-    (repo, sdp)
+    let repo = match query_repo(rapid_store, repo_basename).await? {
+        None => return Ok(None),
+        Some(repo) => repo,
+    };
+    let sdp = match query_sdp(rapid_store, &repo, fullname).await? {
+        None => return Ok(None),
+        Some(sdp) => sdp,
+    };
+    Ok(Some((repo, sdp)))
 }
 
-#[derive(Error, Debug)]
-pub enum QueryRepoError {
-    #[error("failed to open repository registry")]
-    FailedToOpenRepositoryRegistry(#[from] Box<dyn Error>),
-}
+// TODO: Should I just move rapid_store API here?
+// It is doing the same thing basically...
 
 pub async fn query_repo(
     rapid_store: &RapidStore,
     repo_basename: &str,
-) -> Result<Option<Repo>, QueryRepoError> {
+) -> Result<Option<Repo>, MetadataQueryError> {
     let repo_registry =
         match rapid::parsing::parse_repos_from_file(&rapid_store.get_registry_path()) {
             Err(err) => {
-                return Err(QueryRepoError::FailedToOpenRepositoryRegistry(err));
+                return Err(MetadataQueryError::CorruptFile(err));
             }
             Ok(repo_registry) => repo_registry,
         };
@@ -41,17 +42,24 @@ pub async fn query_repo(
     Ok(repo_registry.into_iter().find(|r| r.name == repo_basename))
 }
 
-pub async fn query_sdp(rapid_store: &RapidStore, repo: &Repo, fullname: &str) -> Option<Sdp> {
-    return match rapid_store.find_sdp(repo, fullname) {
-        Err(err) => {
-            println!(
-                "Failed to load sdp: (repo: {}) (fullname: {}). Error: {}",
-                repo.name, fullname, err
-            );
-            return None;
-        }
-        Ok(sdp) => sdp,
-    };
+pub async fn query_sdp(
+    rapid_store: &RapidStore,
+    repo: &Repo,
+    fullname: &str,
+) -> Result<Option<Sdp>, MetadataQueryError> {
+    rapid_store
+        .find_sdp(repo, fullname)
+        .map_err(|e| MetadataQueryError::CorruptFile(e))
+    // return match rapid_store.find_sdp(repo, fullname) {
+    //     Err(err) => {
+    //         println!(
+    //             "Failed to load sdp: (repo: {}) (fullname: {}). Error: {}",
+    //             repo.name, fullname, err
+    //         );
+    //         return None;
+    //     }
+    //     Ok(sdp) => sdp,
+    // };
 }
 
 pub async fn query_sdp_files(rapid_store: &RapidStore, sdp: &Sdp) -> Vec<SdpPackage> {
@@ -81,7 +89,9 @@ mod tests {
             &rapid_store,
             "sbc:git:860aac5eb5ce292121b741ca8514516777ae14dc",
         )
-        .await;
+        .await
+        .unwrap()
+        .unwrap();
 
         let mut sprd_files = HashSet::new();
 

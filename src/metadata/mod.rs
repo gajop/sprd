@@ -1,3 +1,6 @@
+use std::error::Error;
+use thiserror::Error;
+
 use crate::{
     api::{DownloadOptions, MetadataSource},
     rapid::types::SdpPackage,
@@ -11,11 +14,20 @@ mod metadata_file;
 mod metadata_local;
 mod metadata_rest;
 
+#[derive(Error, Debug)]
+pub enum MetadataQueryError {
+    #[error("corrupt file")]
+    CorruptFile(#[source] Box<dyn Error>),
+
+    #[error("download failed")]
+    DownloadFailed(#[source] Box<dyn Error>),
+}
+
 pub async fn query_metadata(
     rapid_store: &RapidStore,
     opts: &DownloadOptions,
     fullname: &str,
-) -> (Repo, Sdp) {
+) -> Result<Option<(Repo, Sdp)>, MetadataQueryError> {
     match &opts.metadata_source {
         MetadataSource::Local => metadata_local::query_metadata(rapid_store, fullname).await,
         MetadataSource::FileApi => metadata_file::query_metadata(rapid_store, fullname).await,
@@ -29,11 +41,9 @@ pub async fn query_repo(
     rapid_store: &RapidStore,
     opts: &DownloadOptions,
     repo_basename: &str,
-) -> Option<Repo> {
+) -> Result<Option<Repo>, MetadataQueryError> {
     match &opts.metadata_source {
-        MetadataSource::Local => metadata_local::query_repo(rapid_store, repo_basename)
-            .await
-            .unwrap(),
+        MetadataSource::Local => metadata_local::query_repo(rapid_store, repo_basename).await,
         MetadataSource::FileApi => metadata_file::query_repo(rapid_store, repo_basename).await,
         MetadataSource::RestApi(api_server) => {
             metadata_rest::query_repo(api_server, repo_basename).await
@@ -46,12 +56,12 @@ pub async fn query_sdp(
     opts: &DownloadOptions,
     repo: &Repo,
     tag: &str,
-) -> Option<Sdp> {
+) -> Result<Option<Sdp>, MetadataQueryError> {
     match &opts.metadata_source {
         MetadataSource::Local => metadata_local::query_sdp(rapid_store, repo, tag).await,
         MetadataSource::FileApi => metadata_file::query_sdp(rapid_store, repo, tag).await,
         MetadataSource::RestApi(api_server) => {
-            Some(metadata_rest::query_sdp(api_server, &format!("{}:{}", &repo.name, tag)).await)
+            metadata_rest::query_sdp(api_server, &format!("{}:{}", &repo.name, tag)).await
         }
     }
 }
@@ -88,7 +98,9 @@ mod tests {
             &api::DownloadOptions::default(),
             "sbc:git:860aac5eb5ce292121b741ca8514516777ae14dc",
         )
-        .await;
+        .await
+        .unwrap()
+        .unwrap();
 
         assert_eq!(sdp.md5, "d80d786597510d1358be3b04a7e9146e");
     }

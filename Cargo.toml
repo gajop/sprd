@@ -1,7 +1,11 @@
 [package]
 authors = ["Gajo Petrovic <gajopetrovic@gmail.com>"]
+description = "Modern Spring downloader built with Rust"
 edition = "2021"
+license = "MIT OR Apache-2.0"
 name = "sprd"
+readme = "README.md"
+repository = "https://github.com/gajop/sprd"
 version = "0.1.0"
 
 [dependencies]

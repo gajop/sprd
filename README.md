@@ -31,13 +31,13 @@ at your option.
 Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.
 
 
-# WIP :construction:
+# :construction: WIP
 
 This project is under construction and not ready for use.
 
 Below you can see my very rough roadmap:
 
-### :construction In progress:
+### :construction: In progress:
 - New output types: Interactive, Json, Piped (like Interactive but pipable to files), Silent and Auto
 
 ### :bookmark: Dev preview:

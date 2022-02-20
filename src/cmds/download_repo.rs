@@ -45,3 +45,18 @@ async fn download_one_repo(
 async fn download_all_repos(rapid_store: &RapidStore) -> Result<(), Box<dyn std::error::Error>> {
     file_download::download_all_repos(rapid_store).await
 }
+
+#[cfg(test)]
+
+mod tests {
+    use super::*;
+    use crate::rapid;
+
+    #[tokio::test]
+    async fn download_one_repo_with_clean_install() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let rapid_store = rapid::rapid_store::RapidStore::new(temp_dir.into_path());
+
+        download_one_repo(&rapid_store, "byar").await.unwrap();
+    }
+}

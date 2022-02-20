@@ -19,7 +19,9 @@ Download latest BYAR test
 `cargo run -- --root-folder ~/projects/spring-dir download-sdp some-sdp-name`
 
 <!--
-WIP:
+WIP
+Output:
+- New output types: Interactive, Json, Piped (like Interactive but pipable to files), Silent and Auto
 
 TODO:
 Pool downloader:
@@ -29,15 +31,14 @@ Pool downloader:
 
 Commands:
 - Refactor commands out of lib.rs, they're only sensible to have for the binary. We don't want library authors to use the command API
+- Improve command naming: download-repo is especially deceptive
 
 Downloader:
 - Check validity of other metadata files too: save size & gz validity
+- Auto-retry
 - Option to not commit metadata downloads until pool finishes
 - Option to download in parallel (?)
 - Make it possible to specify the server URLs
-
-Output:
-- New output types: Interactive, Json, Piped (like Interactive but pipable to files), Silent and Auto
 
 Docs:
 - Add description. What does this program do?

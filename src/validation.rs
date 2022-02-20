@@ -94,7 +94,6 @@ pub fn validate_sdp_package_with_path(path: &Path, md5_bin: [u8; 16]) -> Option<
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
 
     use crate::api::MetadataSource;
 
@@ -111,7 +110,7 @@ mod tests {
 
     #[tokio::test]
     async fn check_prd_tag() {
-        let rapid_store = RapidStore::new(PathBuf::from("test_folders/test_prd"));
+        let rapid_store = RapidStore::new(test_utils::setup_pr_downloader_folders());
         assert!(validate_by_fullname(
             &rapid_store,
             &DownloadOptions {
@@ -125,7 +124,7 @@ mod tests {
 
     #[tokio::test]
     async fn check_sprd_tag() {
-        let rapid_store = RapidStore::new(PathBuf::from("test_folders/test_sprd"));
+        let rapid_store = RapidStore::new(test_utils::setup_sprd_folders().await);
         assert!(validate_by_fullname(
             &rapid_store,
             &DownloadOptions {

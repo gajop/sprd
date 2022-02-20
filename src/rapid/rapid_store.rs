@@ -98,9 +98,9 @@ impl RapidStore {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_find_sdp() {
-        let rapid_store = RapidStore::default();
+    #[tokio::test]
+    async fn test_find_sdp() {
+        let rapid_store = RapidStore::new(test_utils::setup_sprd_folders().await);
         let sdp = rapid_store
             .find_sdp(
                 &Repo {

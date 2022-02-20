@@ -84,7 +84,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_query_sdp_files() {
-        let rapid_store = rapid::rapid_store::RapidStore::default();
+        let rapid_store = RapidStore::new(test_utils::setup_pr_downloader_folders());
+
         let (_, sdp) = query_metadata(
             &rapid_store,
             "sbc:git:860aac5eb5ce292121b741ca8514516777ae14dc",
@@ -110,6 +111,7 @@ mod tests {
             ));
         }
 
+        let _rapid_store_sprd = test_utils::setup_sprd_folders().await;
         let folders = list_files(Path::new("test_folders/test_sprd/pool/"));
         let prd_files: HashSet<String> = folders
             .iter()

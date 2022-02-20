@@ -85,13 +85,13 @@ pub async fn query_sdp_files(
 
 mod tests {
 
-    use crate::{api, rapid};
+    use crate::api;
 
     use super::*;
 
     #[tokio::test]
     async fn test_query_metadata() {
-        let rapid_store = rapid::rapid_store::RapidStore::default();
+        let rapid_store = RapidStore::new(test_utils::setup_sprd_folders().await);
         let (_, sdp) = query_metadata(
             &rapid_store,
             &api::DownloadOptions::default(),

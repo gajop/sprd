@@ -11,7 +11,7 @@ async fn test_folder_equality() {
 
     for file_equality in [
         "rapid/repos.springrts.com/repos.gz",
-        "repos.springrts.com/sbc/versions.gz",
+        "rapid/repos.springrts.com/sbc/versions.gz",
     ] {
         assert_files_equal(
             &sprd_path.join(file_equality),

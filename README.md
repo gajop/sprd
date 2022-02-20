@@ -99,9 +99,9 @@ This project is under construction and not ready for use.
 Below you can see my very rough roadmap:
 
 ### :construction: In progress:
+- Fix download-repo on fresh installs. (Failed to download all repositories: No such file or directory (os error 2))
 
 ### :bookmark: Dev preview:
-- Fix download-repo on fresh installs. (Failed to download all repositories: No such file or directory (os error 2))
 - New output types: Interactive, Json, Piped (like Interactive but pipable to files), Silent and Auto
 - Improve command naming: download-repo is especially deceptive
 

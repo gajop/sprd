@@ -6,35 +6,32 @@ use std::{
 
 #[tokio::test]
 async fn test_folder_equality() {
-    test_utils::setup_pr_downloader_folders();
-    test_utils::setup_sprd_folders().await;
+    let prd_path = test_utils::setup_pr_downloader_folders();
+    let sprd_path = test_utils::setup_sprd_folders().await;
 
-    assert_files_equal(
-        Path::new("test_folders/test_sprd/rapid/repos.springrts.com/repos.gz"),
-        Path::new("test_folders/test_prd/rapid/repos.springrts.com/repos.gz"),
-    );
+    for file_equality in [
+        "rapid/repos.springrts.com/repos.gz",
+        "repos.springrts.com/sbc/versions.gz",
+    ] {
+        assert_files_equal(
+            &sprd_path.join(file_equality),
+            &prd_path.join(file_equality),
+        );
+    }
 
-    assert_files_equal(
-        Path::new("test_folders/test_sprd/rapid/repos.springrts.com/sbc/versions.gz"),
-        Path::new("test_folders/test_prd/rapid/repos.springrts.com/sbc/versions.gz"),
-    );
+    for file_identitiy in ["packages/", "pool/"] {
+        assert_file_identity(
+            &sprd_path.join(file_identitiy),
+            &prd_path.join(file_identitiy),
+            true,
+        );
+    }
 
     // fn main() -> io::Result<()> {
     //     let mut entries = fs::read_dir(".")?
     //         .map(|res| res.map(|e| e.path()))
     //         .collect::<Result<Vec<_>, io::Error>>()?;
 
-    assert_file_identity(
-        Path::new("test_folders/test_sprd/packages/"),
-        Path::new("test_folders/test_prd/packages/"),
-        true,
-    );
-
-    assert_file_identity(
-        Path::new("test_folders/test_sprd/pool/"),
-        Path::new("test_folders/test_prd/pool/"),
-        true,
-    );
     // for entry in  {
     //     let entry = entry.unwrap();
     //     let path = entry.path();

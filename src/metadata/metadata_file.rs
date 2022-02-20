@@ -81,15 +81,15 @@ mod tests {
         assert_eq!(repo.url, "https://repos.springrts.com/byar");
     }
 
-    #[tokio::test]
-    async fn test_query_sdp() {
-        let rapid_store = rapid::rapid_store::RapidStore::default();
+    // #[tokio::test]
+    // async fn test_query_sdp() {
+    //     let rapid_store = rapid::rapid_store::RapidStore::default();
 
-        let repo = query_repo(&rapid_store, "byar").await.unwrap().unwrap();
-        let sdp = query_sdp(&rapid_store, &repo, "test")
-            .await
-            .unwrap()
-            .unwrap();
-        assert_eq!(sdp.fullname, "byar:test");
-    }
+    //     let repo = query_repo(&rapid_store, "byar").await.unwrap().unwrap();
+    //     let sdp = query_sdp(&rapid_store, &repo, "test")
+    //         .await
+    //         .unwrap()
+    //         .unwrap();
+    //     assert_eq!(sdp.fullname, "byar:test");
+    // }
 }

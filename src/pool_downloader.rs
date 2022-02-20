@@ -1,6 +1,7 @@
 use std::error::Error;
 use std::fs::{self, File};
 use std::io::Write;
+use std::rc::Rc;
 
 use hyper::body::HttpBody;
 use hyper::http::Request;
@@ -40,6 +41,7 @@ struct BufferedReader {
     res: Response<Body>,
     buf: Vec<u8>,
     current: usize,
+    progress_function: Option<Box<dyn FnMut(usize)>>,
 }
 
 #[derive(Error, Debug)]
@@ -56,7 +58,13 @@ impl BufferedReader {
             res,
             buf: Vec::new(),
             current: 0,
+            progress_function: None,
         }
+    }
+
+    pub fn set_progress_function(&mut self, f: Box<dyn FnMut(usize)>) -> &mut BufferedReader {
+        self.progress_function = Some(f);
+        self
     }
 
     pub async fn read_amount(&mut self, size: usize) -> Result<Vec<u8>, ReadingError> {
@@ -69,8 +77,11 @@ impl BufferedReader {
                 .map_err(|_e| ReadingError::NetworkError)?;
             let chunk = next;
             self.current += chunk.len();
-
             self.buf.extend_from_slice(&chunk[..]);
+
+            if let Some(progress_function) = &mut self.progress_function {
+                progress_function(chunk.len());
+            }
         }
         self.current -= size;
         let result: Vec<u8> = self.buf.drain(..size).collect();
@@ -127,7 +138,7 @@ pub async fn download_sdp_files_with_url(
     let pb_template: String =
         "{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes} ({eta})"
             .to_owned();
-    let pb = ProgressBar::new(total_size as u64);
+    let pb = Rc::new(ProgressBar::new(total_size as u64));
     pb.set_style(
         ProgressStyle::default_bar()
             .template(&pb_template)
@@ -136,14 +147,17 @@ pub async fn download_sdp_files_with_url(
 
     let mut reader = BufferedReader::new(res);
     let mut downloaded_size = 0;
+    let pb_cloned = pb.clone();
+    reader.set_progress_function(Box::new(move |downloaded: usize| {
+        downloaded_size += downloaded;
+        pb_cloned.set_position(downloaded_size as u64);
+    }));
     let missing_files = rapid_store.find_missing_files(sdp_files);
     for sdp_package in missing_files.iter() {
         let file_size = reader.read_amount(LENGTH_SIZE).await.map_err(Box::new)?;
-        downloaded_size += file_size.len();
         let file_size = u32::from_be_bytes(slice_to_u4(&file_size)) as usize;
 
         let file_data = reader.read_amount(file_size).await.map_err(Box::new)?;
-        downloaded_size += file_data.len();
 
         let dest = rapid_store.get_pool_path(sdp_package);
         std::fs::create_dir_all(dest.parent().expect("No parent directory"))?;
@@ -165,14 +179,12 @@ pub async fn download_sdp_files_with_url(
         let pool_path = rapid_store.get_pool_path(sdp_package);
         match validation {
             None => {
-                println!("File OK: {pool_path:?}");
+                // println!("File OK: {pool_path:?}");
             }
             Some(err) => {
                 println!("Invalid file: {err:?} {pool_path:?}");
             }
         }
-
-        pb.set_position(downloaded_size as u64);
     }
     pb.finish_with_message("downloaded");
 

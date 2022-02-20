@@ -90,7 +90,6 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    #[ignore]
     async fn test_query_metadata() {
         let rapid_store = rapid::rapid_store::RapidStore::default();
         let (_, sdp) = query_metadata(

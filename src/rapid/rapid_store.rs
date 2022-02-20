@@ -99,7 +99,6 @@ mod tests {
     use super::*;
 
     #[test]
-    #[ignore]
     fn test_find_sdp() {
         let rapid_store = RapidStore::default();
         let sdp = rapid_store

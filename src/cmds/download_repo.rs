@@ -32,7 +32,20 @@ async fn download_one_repo(
     repo: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // println!("Failed to open repository registry: {err}.")
-    let repo_registry = rapid::parsing::parse_repos_from_file(&rapid_store.get_registry_path())?;
+
+    let mut attempt = 0;
+    let repo_registry = loop {
+        match rapid::parsing::parse_repos_from_file(&rapid_store.get_registry_path()) {
+            Err(err) => {
+                attempt += 1;
+                if attempt >= 5 {
+                    return Err(err);
+                }
+                file_download::download_repo_registry(rapid_store).await?;
+            }
+            Ok(repos) => break repos,
+        }
+    };
 
     let repo = repo_registry
         .into_iter()

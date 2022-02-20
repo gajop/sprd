@@ -127,7 +127,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
+    #[ignore] // Need to have the local server
     async fn test_query_metadata() {
         let (_, sdp) = query_metadata(
             LOCAL_API_SERVER,

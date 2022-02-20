@@ -2,75 +2,36 @@ use std::{
     ffi::OsString,
     fs,
     path::{Path, PathBuf},
-    process::Command,
 };
-
-use sprd::{api, cmds, rapid};
-
-// These tests require that you have pr-downloader installed and available in Path.
-
-fn setup_prd_folders() {
-    let path = Path::new("test_folders/test_prd/");
-    if path.exists() {
-        return;
-    }
-
-    println!("Setting up prd folders. This might take a while...");
-    std::fs::create_dir_all(path).unwrap();
-    let output = Command::new("pr-downloader")
-        .arg("--filesystem-writepath")
-        .arg("test_folders/test_prd")
-        .arg("--download-game")
-        .arg("sbc:git:860aac5eb5ce292121b741ca8514516777ae14dc")
-        .output()
-        .expect("Failed to execute command");
-
-    println!("{output:?}");
-}
-
-#[tokio::test]
-async fn test_file_api() {
-    setup_prd_folders();
-
-    let rapid_store = rapid::rapid_store::RapidStore {
-        root_folder: PathBuf::from("test_folders/test_sprd"),
-    };
-    cmds::download(
-        &rapid_store,
-        &api::DownloadOptions::default(),
-        "sbc:git:860aac5eb5ce292121b741ca8514516777ae14dc",
-    )
-    .await;
-}
 
 #[tokio::test]
 async fn test_folder_equality() {
-    assert_files_equal(
-        Path::new("test_folders/test_sprd/rapid/repos.springrts.com/repos.gz"),
-        Path::new("test_folders/test_prd/rapid/repos.springrts.com/repos.gz"),
-    );
+    let prd_path = test_utils::setup_pr_downloader_folders();
+    let sprd_path = test_utils::setup_sprd_folders().await;
 
-    assert_files_equal(
-        Path::new("test_folders/test_sprd/rapid/repos.springrts.com/sbc/versions.gz"),
-        Path::new("test_folders/test_prd/rapid/repos.springrts.com/sbc/versions.gz"),
-    );
+    for file_equality in [
+        "rapid/repos.springrts.com/repos.gz",
+        "rapid/repos.springrts.com/sbc/versions.gz",
+    ] {
+        assert_files_equal(
+            &sprd_path.join(file_equality),
+            &prd_path.join(file_equality),
+        );
+    }
+
+    for file_identitiy in ["packages/", "pool/"] {
+        assert_file_identity(
+            &sprd_path.join(file_identitiy),
+            &prd_path.join(file_identitiy),
+            true,
+        );
+    }
 
     // fn main() -> io::Result<()> {
     //     let mut entries = fs::read_dir(".")?
     //         .map(|res| res.map(|e| e.path()))
     //         .collect::<Result<Vec<_>, io::Error>>()?;
 
-    assert_file_identity(
-        Path::new("test_folders/test_sprd/packages/"),
-        Path::new("test_folders/test_prd/packages/"),
-        true,
-    );
-
-    assert_file_identity(
-        Path::new("test_folders/test_sprd/pool/"),
-        Path::new("test_folders/test_prd/pool/"),
-        true,
-    );
     // for entry in  {
     //     let entry = entry.unwrap();
     //     let path = entry.path();

@@ -31,6 +31,7 @@ jobs:
         run: |
           wget https://github.com/gajop/spring-launcher/blob/master/bin/pr-downloader\?raw\=true -O pr-downloader
           chmod +x pr-downloader
+          file pr-downloader
       - run: cargo test -- --test-threads=1
 
   fmt:

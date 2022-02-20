@@ -63,11 +63,13 @@ async fn test_folder_equality() {
     assert_file_identity(
         Path::new("test_folders/test_sprd/packages/"),
         Path::new("test_folders/test_prd/packages/"),
+        true,
     );
 
     assert_file_identity(
         Path::new("test_folders/test_sprd/pool/"),
         Path::new("test_folders/test_prd/pool/"),
+        true,
     );
     // for entry in  {
     //     let entry = entry.unwrap();
@@ -88,26 +90,53 @@ fn assert_files_equal(path1: &Path, path2: &Path) {
     assert_eq!(first_contents, second_contents);
 }
 
-fn assert_file_identity(path1: &Path, path2: &Path) {
-    let files1: Vec<PathBuf> = fs::read_dir(path1)
-        .unwrap()
-        .map(|file| file.unwrap().path())
-        .collect();
-    let files2: Vec<PathBuf> = fs::read_dir(path2)
-        .unwrap()
-        .map(|file| file.unwrap().path())
-        .collect();
+fn assert_file_identity(path1: &Path, path2: &Path, ignore_empty: bool) {
+    let get_names = |path: &Path| {
+        let files: Vec<PathBuf> = fs::read_dir(path)
+            .unwrap()
+            .map(|file| {
+                // TODO: Support nested directories
+                file.unwrap().path()
+            })
+            .flat_map(|path| {
+                let metadata = fs::metadata(&path).unwrap();
+                if metadata.is_dir() {
+                    fs::read_dir(path)
+                        .unwrap()
+                        .map(|f| f.unwrap().path())
+                        .collect::<Vec<PathBuf>>()
+                } else {
+                    vec![path]
+                }
+            })
+            .filter(|file| {
+                if !ignore_empty {
+                    return true;
+                }
+                let metadata = fs::metadata(file).unwrap();
+                if metadata.is_file() {
+                    return metadata.len() > 0;
+                }
 
-    let mut names1 = files1
-        .iter()
-        .map(|p| p.file_name().unwrap().to_owned())
-        .collect::<Vec<OsString>>();
-    names1.sort();
-    let mut names2: Vec<OsString> = files2
-        .iter()
-        .map(|p| p.file_name().unwrap().to_owned())
-        .collect::<Vec<OsString>>();
-    names2.sort();
+                if metadata.is_dir() {
+                    panic!("Shouldn't have directories at this point: {file:?}");
+                } else {
+                    panic!("Found unexpected file type: neither file nor directory: {file:?}");
+                }
+            })
+            .collect();
+
+        let mut names = files
+            .iter()
+            .map(|p| p.file_name().unwrap().to_owned())
+            .collect::<Vec<OsString>>();
+
+        names.sort();
+        names
+    };
+
+    let names1 = get_names(path1);
+    let names2 = get_names(path2);
 
     if names1 != names2 {
         for n1 in names1.iter() {

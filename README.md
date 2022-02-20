@@ -99,7 +99,7 @@ This project is under construction and not ready for use.
 Below you can see my very rough roadmap:
 
 ### :construction: In progress:
-- New output types: Interactive, Json, Piped (like Interactive but pipable to files), Silent and Auto
+- New output types: Auto
 
 ### :bookmark: Dev release:
 - Improve command naming: download-repo is especially deceptive
@@ -120,7 +120,9 @@ Commands:
 
 Downloader:
 - Option to not commit metadata downloads until pool finishes
+  - don't override versions.gz until pool has been fully downloaded. otherwise users who've updated their versions.gz won't be able to play with `:test` until pool has been updated
 - Option to download in parallel (?)
+  - ability to async (parallel) query all repos of interest on launcher (lobby?) start (with some sensible caching?)
 - Make it possible to specify the server URLs
 
 

@@ -1,44 +1,55 @@
 use tokio::fs;
 
 use crate::{
-    api::{DownloadOptions, MetadataSource},
+    api::DownloadOptions,
+    event::Event,
     rapid,
     validation::{self, FileError, ValidityErrors},
 };
 
 use super::download;
 
-pub async fn fix(rapid_store: &rapid::rapid_store::RapidStore, fullname: &str) {
+pub async fn fix(
+    rapid_store: &rapid::rapid_store::RapidStore,
+    opts: &DownloadOptions,
+    fullname: &str,
+) {
     for attempt in 0..5 {
-        println!("Fix attempt {attempt}.");
-        let success = fix_attempt(rapid_store, fullname).await;
+        opts.print
+            .event(Event::Info(format!("Fix attempt {attempt}.")));
+        let success = fix_attempt(rapid_store, opts, fullname).await;
         if success {
-            println!("Success");
+            opts.print.event(Event::Info("Success".to_owned()));
             return;
         }
     }
 
-    println!("Failed to fix after five attempts.");
+    opts.print.event(Event::Error(
+        "Failed to fix after five attempts.".to_owned(),
+    ));
 }
 
-async fn fix_attempt(rapid_store: &rapid::rapid_store::RapidStore, fullname: &str) -> bool {
-    let results = validation::validate_by_fullname(
-        rapid_store,
-        &DownloadOptions::new(MetadataSource::Local),
-        fullname,
-    )
-    .await;
+async fn fix_attempt(
+    rapid_store: &rapid::rapid_store::RapidStore,
+    opts: &DownloadOptions,
+    fullname: &str,
+) -> bool {
+    let results = validation::validate_by_fullname(rapid_store, opts, fullname).await;
 
     match results {
         Ok(()) => {
-            println!("Successfully verified {fullname}");
+            opts.print
+                .event(Event::Info(format!("Successfully verified: {fullname}")));
+            // println!("Successfully verified {fullname}");
             return true;
         }
         Err(ValidityErrors::MissingSdp) => {
-            println!("Sdp file is missing.");
+            opts.print
+                .event(Event::Error("Sdp file is missing.".to_owned()));
         }
         Err(ValidityErrors::MetadataQueryError(error)) => {
-            println!("Metadata query error: {error:?}");
+            opts.print
+                .event(Event::Error(format!("Metadata query error: {error:?}")));
         }
         Err(ValidityErrors::InvalidFiles { files }) => {
             let mut removed_files = 0;
@@ -46,7 +57,8 @@ async fn fix_attempt(rapid_store: &rapid::rapid_store::RapidStore, fullname: &st
                 match file_error {
                     FileError::Corrupt | FileError::WrongHash => {
                         if let Err(e) = fs::remove_file(&path).await {
-                            println!("Error: {e:?} for {path:?}");
+                            opts.print
+                                .event(Event::Error(format!("Error: {e:?} for {path:?}")));
                         } else {
                             removed_files += 1;
                         }
@@ -54,11 +66,13 @@ async fn fix_attempt(rapid_store: &rapid::rapid_store::RapidStore, fullname: &st
                     _ => {}
                 }
             }
-            println!("Removed {removed_files} corrupt files");
+            opts.print.event(Event::Info(format!(
+                "Removed {removed_files} corrupt files"
+            )));
         }
     }
 
-    download::download(rapid_store, &DownloadOptions::default(), fullname).await;
+    download::download(rapid_store, opts, fullname).await;
 
     false
 }

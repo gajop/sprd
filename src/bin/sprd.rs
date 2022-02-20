@@ -1,10 +1,18 @@
 #![warn(clippy::all)]
 #![warn(rust_2018_idioms)]
 
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::Arc};
 
-use clap::{Parser, Subcommand};
-use sprd::{api::DownloadOptions, cmds, rapid};
+use clap::{ArgEnum, Parser, Subcommand};
+use output::{interactive::InteractiveOutput, json::JsonOutput};
+use sprd::{
+    api::{DownloadOptions, MetadataSource},
+    cmds,
+    event::{PrintOutput, SilentOutput},
+    rapid,
+};
+
+mod output;
 
 #[derive(Parser)]
 #[clap(author, version, about, long_about = "Rapid client")]
@@ -12,8 +20,20 @@ struct Args {
     #[clap(short, long)]
     root_folder: Option<PathBuf>,
 
+    #[clap(short, long, arg_enum, default_value_t = PrintType::Interactive)]
+    print: PrintType,
+
     #[clap(subcommand)]
     command: Commands,
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ArgEnum)]
+enum PrintType {
+    Auto,
+    Silent,
+    Print,
+    Json,
+    Interactive,
 }
 
 #[derive(Subcommand)]
@@ -44,28 +64,41 @@ async fn main() {
         None => rapid::rapid_store::RapidStore::default(),
     };
 
+    let mut opts = DownloadOptions {
+        print: match args.print {
+            PrintType::Silent => Arc::new(Box::new(SilentOutput {})),
+            PrintType::Auto => unimplemented!("Implement output detection"),
+            PrintType::Json => Arc::new(Box::new(JsonOutput::new())),
+            PrintType::Print => Arc::new(Box::new(PrintOutput {})),
+            PrintType::Interactive => Arc::new(Box::new(InteractiveOutput::new())),
+        },
+        ..Default::default()
+    };
+
     match &args.command {
         Commands::Download { tag } => {
-            cmds::download(&rapid_store, &DownloadOptions::default(), tag).await;
+            cmds::download(&rapid_store, &opts, tag).await;
         }
         Commands::DownloadSdp { sdp } => {
-            cmds::download_sdp(&rapid_store, sdp).await;
+            cmds::download_sdp(&rapid_store, &opts, sdp).await;
         }
         Commands::DownloadRegistry => {
-            cmds::download_registry(&rapid_store).await;
+            cmds::download_registry(&rapid_store, &opts).await;
         }
         Commands::DownloadRepo { repo } => {
-            cmds::download_repo(&rapid_store, repo.as_deref()).await;
+            cmds::download_repo(&rapid_store, &opts, repo.as_deref()).await;
         }
 
         Commands::CheckSdp { sdp } => {
             cmds::check_sdp(&rapid_store, sdp);
         }
         Commands::Validate { fullname } => {
-            cmds::validate_by_fullname(&rapid_store, fullname).await;
+            opts.metadata_source = MetadataSource::Local;
+            cmds::validate_by_fullname(&rapid_store, &opts, fullname).await;
         }
         Commands::Fix { fullname } => {
-            cmds::fix(&rapid_store, fullname).await;
+            opts.metadata_source = MetadataSource::Local;
+            cmds::fix(&rapid_store, &opts, fullname).await;
         }
     }
 }

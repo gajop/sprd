@@ -967,6 +967,7 @@ dependencies = [
  "md-5",
  "reqwest",
  "serde",
+ "serde_json",
  "tempfile",
  "test_utils",
  "thiserror",

@@ -1,7 +1,6 @@
 use std::error::Error;
 use std::fs::{self, File};
 use std::io::Write;
-use std::rc::Rc;
 
 use hyper::body::HttpBody;
 use hyper::http::Request;
@@ -12,9 +11,10 @@ use hyper_tls::HttpsConnector;
 // use tokio::fs::File;
 // use tokio::io::AsyncWriteExt;
 
-use indicatif::{ProgressBar, ProgressStyle};
 use thiserror::Error;
 
+use crate::api::DownloadOptions;
+use crate::event::Event;
 use crate::validation::validate_sdp_package;
 
 use super::gz;
@@ -25,6 +25,7 @@ use super::rapid::{
 
 pub async fn download_sdp_files(
     rapid_store: &RapidStore,
+    opts: &DownloadOptions,
     repo: &Repo,
     sdp: &Sdp,
     download_map: Vec<u8>,
@@ -34,7 +35,7 @@ pub async fn download_sdp_files(
     let url = url.parse::<hyper::Uri>().unwrap();
     // println!("{url}");
 
-    download_sdp_files_with_url(rapid_store, &url, download_map, sdp_files).await
+    download_sdp_files_with_url(rapid_store, opts, &url, download_map, sdp_files).await
 }
 
 struct BufferedReader {
@@ -106,6 +107,7 @@ fn slice_to_u4(slice: &[u8]) -> [u8; 4] {
 
 pub async fn download_sdp_files_with_url(
     rapid_store: &RapidStore,
+    opts: &DownloadOptions,
     url: &Uri,
     download_map: Vec<u8>,
     sdp_files: &[SdpPackage],
@@ -135,22 +137,14 @@ pub async fn download_sdp_files_with_url(
 
     const LENGTH_SIZE: usize = 4;
 
-    let pb_template: String =
-        "{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes} ({eta})"
-            .to_owned();
-    let pb = Rc::new(ProgressBar::new(total_size as u64));
-    pb.set_style(
-        ProgressStyle::default_bar()
-            .template(&pb_template)
-            .progress_chars("#>-"),
-    );
-
     let mut reader = BufferedReader::new(res);
     let mut downloaded_size = 0;
-    let pb_cloned = pb.clone();
+    opts.print
+        .event(Event::DownloadStarted(total_size as usize));
+    let print_function = opts.print.clone();
     reader.set_progress_function(Box::new(move |downloaded: usize| {
         downloaded_size += downloaded;
-        pb_cloned.set_position(downloaded_size as u64);
+        print_function.event(Event::DownloadProgress(downloaded_size));
     }));
     let missing_files = rapid_store.find_missing_files(sdp_files);
     for sdp_package in missing_files.iter() {
@@ -170,9 +164,9 @@ pub async fn download_sdp_files_with_url(
 
         let file_size_on_disk = fs::metadata(dest).unwrap().len();
         if (file_size_on_disk as usize) != file_size as usize {
-            println!(
+            opts.print.event(Event::Error(format!(
                 "File size on disk ({file_size_on_disk}) different than in memory ({file_size})"
-            );
+            )));
         }
 
         let validation = validate_sdp_package(rapid_store, sdp_package);
@@ -182,18 +176,19 @@ pub async fn download_sdp_files_with_url(
                 // println!("File OK: {pool_path:?}");
             }
             Some(err) => {
-                println!("Invalid file: {err:?} {pool_path:?}");
+                opts.print
+                    .event(Event::Error(format!("Invalid file: {err:?} {pool_path:?}")));
             }
         }
     }
-    pb.finish_with_message("downloaded");
+    opts.print.event(Event::DownloadFinished {});
 
     let remaining = reader.read_remainder().await?;
     if !remaining.is_empty() {
-        println!(
+        opts.print.event(Event::Error(format!(
             "There are {} bytes remaining in the stream, should be empty.",
             remaining.len()
-        );
+        )));
     }
 
     Ok(())

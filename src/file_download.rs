@@ -9,7 +9,7 @@ use hyper_tls::HttpsConnector;
 // use tokio::fs::File;
 // use tokio::io::AsyncWriteExt;
 
-use indicatif::{ProgressBar, ProgressStyle};
+use crate::{api::DownloadOptions, event::Event};
 
 use super::rapid::{
     parsing::parse_repos_from_file,
@@ -19,40 +19,52 @@ use super::rapid::{
 
 pub async fn download_sdp(
     rapid_store: &RapidStore,
+    opts: &DownloadOptions,
     repo: &Repo,
     sdp: &Sdp,
 ) -> Result<(), Box<dyn Error>> {
     let url = format!("{}/packages/{}.sdp", repo.url, sdp.md5);
     let url = hyper::Uri::from_str(&url).unwrap();
     let dest = rapid_store.get_sdp_path_from_md5(&sdp.md5);
-    download_file(url, &dest, "Downloading SDP").await
+    download_file(opts, url, &dest, "Downloading SDP").await
 }
 
-pub async fn download_all_repos(rapid_store: &RapidStore) -> Result<(), Box<dyn Error>> {
+pub async fn download_all_repos(
+    rapid_store: &RapidStore,
+    opts: &DownloadOptions,
+) -> Result<(), Box<dyn Error>> {
     let registry_file = rapid_store.get_registry_path();
     let repos = parse_repos_from_file(&registry_file)?;
     for repo in repos {
-        download_repo(rapid_store, &repo).await?;
+        download_repo(rapid_store, opts, &repo).await?;
     }
 
     Ok(())
 }
 
-pub async fn download_repo(rapid_store: &RapidStore, repo: &Repo) -> Result<(), Box<dyn Error>> {
+pub async fn download_repo(
+    rapid_store: &RapidStore,
+    opts: &DownloadOptions,
+    repo: &Repo,
+) -> Result<(), Box<dyn Error>> {
     let repo_file = rapid_store.get_repo_path(repo);
     let versions_url = repo.url.to_owned() + "/versions.gz";
 
     let url = hyper::Uri::from_str(&versions_url).unwrap();
-    download_file(url, &repo_file, "Downloading repository").await
+    download_file(opts, url, &repo_file, "Downloading repository").await
 }
 
-pub async fn download_repo_registry(rapid_store: &RapidStore) -> Result<(), Box<dyn Error>> {
+pub async fn download_repo_registry(
+    rapid_store: &RapidStore,
+    opts: &DownloadOptions,
+) -> Result<(), Box<dyn Error>> {
     let url = hyper::Uri::from_static("https://repos.springrts.com/repos.gz");
     let registry_file = rapid_store.get_registry_path();
-    download_file(url, &registry_file, "Downloading registry").await
+    download_file(opts, url, &registry_file, "Downloading registry").await
 }
 
 pub async fn download_file(
+    opts: &DownloadOptions,
     url: hyper::Uri,
     dest: &path::Path,
     title: &str,
@@ -77,27 +89,20 @@ pub async fn download_file(
     // let mut file = File::create(dest).await?;
     let mut file = File::create(dest)?;
 
-    let mut pb_template: String =
-        "{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes} ({eta})"
-            .to_owned();
-    pb_template.push_str(title);
-
-    let pb = ProgressBar::new(total_size as u64);
-    pb.set_style(
-        ProgressStyle::default_bar()
-            .template(&pb_template)
-            .progress_chars("#>-"),
-    );
+    opts.print
+        .event(Event::Info(format!("Downloading {title}")));
+    opts.print
+        .event(Event::DownloadStarted(total_size as usize));
 
     while let Some(next) = res.data().await {
         let chunk = next?;
         downloaded_size += chunk.len();
-        pb.set_position(downloaded_size as u64);
+        opts.print.event(Event::DownloadProgress(downloaded_size));
 
         // file.write_all(&chunk).await?;
         file.write_all(&chunk)?;
     }
-    pb.finish_with_message("downloaded");
+    opts.print.event(Event::DownloadFinished);
 
     Ok(())
 }

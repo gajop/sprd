@@ -1,13 +1,17 @@
 use crate::{
+    api::DownloadOptions,
+    event::Event,
     file_download,
     rapid::{self, rapid_store::RapidStore},
 };
 
-pub async fn download_sdp<'a>(rapid_store: &RapidStore, sdp_md5: &str) {
+pub async fn download_sdp<'a>(rapid_store: &RapidStore, opts: &DownloadOptions, sdp_md5: &str) {
     let repo_registry =
         match rapid::parsing::parse_repos_from_file(&rapid_store.get_registry_path()) {
             Err(err) => {
-                println!("Failed to open repository registry: {err}.");
+                opts.print.event(Event::Error(format!(
+                    "Failed to open repository registry: {err}."
+                )));
                 return;
             }
             Ok(repo_registry) => repo_registry,
@@ -37,13 +41,17 @@ pub async fn download_sdp<'a>(rapid_store: &RapidStore, sdp_md5: &str) {
     let (sdp, repo) = match (found_sdp, found_repo) {
         (Some(sdp), Some(repo)) => (sdp, repo),
         _ => {
-            println!("No such sdp: {sdp_md5}");
+            opts.print
+                .event(Event::Error(format!("No such sdp: {sdp_md5}")));
             return;
         }
     };
 
-    match file_download::download_sdp(rapid_store, &repo, &sdp).await {
+    match file_download::download_sdp(rapid_store, opts, &repo, &sdp).await {
         Ok(()) => {}
-        Err(err) => println!("Failed to update registry: {err}"),
+        Err(err) => {
+            opts.print
+                .event(Event::Error(format!("Failed to update registry: {err}")));
+        }
     }
 }

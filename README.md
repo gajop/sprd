@@ -101,14 +101,13 @@ Below you can see my very rough roadmap:
 ### :construction: In progress:
 - New output types: Interactive, Json, Piped (like Interactive but pipable to files), Silent and Auto
 
-### :bookmark: Dev preview:
-- Improve command naming: download-repo is especially deceptive
-
 ### :bookmark: Dev release:
-- Statically link it
+- Improve command naming: download-repo is especially deceptive
+- Avoid panic in library code, use explitic errors instead of `<dyn Error>`
 - Pool downloader autofix files
 - Check validity of other metadata files too: save size & gz validity
 - Auto-retry
+- Statically link it
 
 ### :memo: TODO:
 

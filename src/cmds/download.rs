@@ -16,7 +16,7 @@ pub async fn download<'a>(rapid_store: &RapidStore, opts: &DownloadOptions, full
     }
 
     let download_map = rapid_store.get_missing_files_indices(&sdp_files);
-    pool_downloader::download_sdp_files(rapid_store, &repo, &sdp, download_map, &sdp_files)
+    pool_downloader::download_sdp_files(rapid_store, opts, &repo, &sdp, download_map, &sdp_files)
         .await
         .expect("Failed to download SDP files");
 }

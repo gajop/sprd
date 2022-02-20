@@ -30,7 +30,7 @@ pub async fn query_metadata(
 ) -> Result<Option<(Repo, Sdp)>, MetadataQueryError> {
     match &opts.metadata_source {
         MetadataSource::Local => metadata_local::query_metadata(rapid_store, fullname).await,
-        MetadataSource::FileApi => metadata_file::query_metadata(rapid_store, fullname).await,
+        MetadataSource::FileApi => metadata_file::query_metadata(rapid_store, opts, fullname).await,
         MetadataSource::RestApi(api_server) => {
             metadata_rest::query_metadata(api_server, fullname).await
         }
@@ -44,7 +44,9 @@ pub async fn query_repo(
 ) -> Result<Option<Repo>, MetadataQueryError> {
     match &opts.metadata_source {
         MetadataSource::Local => metadata_local::query_repo(rapid_store, repo_basename).await,
-        MetadataSource::FileApi => metadata_file::query_repo(rapid_store, repo_basename).await,
+        MetadataSource::FileApi => {
+            metadata_file::query_repo(rapid_store, opts, repo_basename).await
+        }
         MetadataSource::RestApi(api_server) => {
             metadata_rest::query_repo(api_server, repo_basename).await
         }
@@ -59,7 +61,7 @@ pub async fn query_sdp(
 ) -> Result<Option<Sdp>, MetadataQueryError> {
     match &opts.metadata_source {
         MetadataSource::Local => metadata_local::query_sdp(rapid_store, repo, tag).await,
-        MetadataSource::FileApi => metadata_file::query_sdp(rapid_store, repo, tag).await,
+        MetadataSource::FileApi => metadata_file::query_sdp(rapid_store, opts, repo, tag).await,
         MetadataSource::RestApi(api_server) => {
             metadata_rest::query_sdp(api_server, &format!("{}:{}", &repo.name, tag)).await
         }
@@ -74,7 +76,9 @@ pub async fn query_sdp_files(
 ) -> Vec<SdpPackage> {
     match &opts.metadata_source {
         MetadataSource::Local => metadata_local::query_sdp_files(rapid_store, sdp).await,
-        MetadataSource::FileApi => metadata_file::query_sdp_files(rapid_store, repo, sdp).await,
+        MetadataSource::FileApi => {
+            metadata_file::query_sdp_files(rapid_store, opts, repo, sdp).await
+        }
         MetadataSource::RestApi(_api_server) => {
             unimplemented!("Can't query SDP files from the Rest API at this moment.");
         }

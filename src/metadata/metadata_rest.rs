@@ -83,7 +83,7 @@ pub async fn query_sdp(server: &str, fullname: &str) -> Result<Option<Sdp>, Meta
 mod tests {
     const LOCAL_API_SERVER: &str = "http://localhost:8080";
 
-    use crate::{metadata::metadata_file, rapid};
+    use crate::{api::DownloadOptions, metadata::metadata_file, rapid};
 
     use super::*;
 
@@ -96,10 +96,11 @@ mod tests {
 
         let rapid_store = rapid::rapid_store::RapidStore::default();
 
-        let repo_with_file = metadata_file::query_repo(&rapid_store, "byar")
-            .await
-            .unwrap()
-            .unwrap();
+        let repo_with_file =
+            metadata_file::query_repo(&rapid_store, &DownloadOptions::default(), "byar")
+                .await
+                .unwrap()
+                .unwrap();
         assert_eq!(repo, repo_with_file);
     }
 
@@ -114,14 +115,15 @@ mod tests {
 
         let rapid_store = rapid::rapid_store::RapidStore::default();
 
-        let repo = metadata_file::query_repo(&rapid_store, "sbc")
+        let repo = metadata_file::query_repo(&rapid_store, &DownloadOptions::default(), "sbc")
             .await
             .unwrap()
             .unwrap();
-        let sdp_file = metadata_file::query_sdp(&rapid_store, &repo, "test")
-            .await
-            .unwrap()
-            .unwrap();
+        let sdp_file =
+            metadata_file::query_sdp(&rapid_store, &DownloadOptions::default(), &repo, "test")
+                .await
+                .unwrap()
+                .unwrap();
 
         assert_eq!(sdp, sdp_file);
     }

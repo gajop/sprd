@@ -113,9 +113,7 @@ mod tests {
         let rapid_store = RapidStore::new(test_utils::setup_pr_downloader_folders());
         assert!(validate_by_fullname(
             &rapid_store,
-            &DownloadOptions {
-                metadata_source: MetadataSource::Local
-            },
+            &DownloadOptions::new(MetadataSource::Local),
             "sbc:git:860aac5eb5ce292121b741ca8514516777ae14dc",
         )
         .await
@@ -127,9 +125,7 @@ mod tests {
         let rapid_store = RapidStore::new(test_utils::setup_sprd_folders().await);
         assert!(validate_by_fullname(
             &rapid_store,
-            &DownloadOptions {
-                metadata_source: MetadataSource::Local
-            },
+            &DownloadOptions::new(MetadataSource::Local),
             "sbc:git:860aac5eb5ce292121b741ca8514516777ae14dc",
         )
         .await

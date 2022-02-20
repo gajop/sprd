@@ -19,7 +19,7 @@ fn setup_prd_folders() {
     std::fs::create_dir_all(path).unwrap();
     let output = Command::new("pr-downloader")
         .arg("--filesystem-writepath")
-        .arg("test_prd")
+        .arg("test_folders/test_prd")
         .arg("--download-game")
         .arg("sbc:git:860aac5eb5ce292121b741ca8514516777ae14dc")
         .output()

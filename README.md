@@ -1,4 +1,4 @@
-# Install
+ Install
 
 ## Project
 
@@ -20,12 +20,10 @@ Download latest BYAR test
 
 <!--
 WIP:
-- Fix/finish the implementation of rapid downloads
 
 TODO:
 Pool downloader:
 - pool downloader tests without internet connectivity (save downloads to files)
-- split pool downloader to separate file
 - Pool downloader autofix files
 - Back to fully async IO (file): use tokio::fs, figure out what was causing the partial write issue despite write_all
 

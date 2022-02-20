@@ -1,5 +1,5 @@
 use crate::{
-    api::DownloadOptions, file_download, metadata, rapid::rapid_store::RapidStore,
+    api::DownloadOptions, metadata, pool_downloader, rapid::rapid_store::RapidStore,
     validation::check_if_sdp_needs_download,
 };
 
@@ -16,7 +16,7 @@ pub async fn download<'a>(rapid_store: &RapidStore, opts: &DownloadOptions, full
     }
 
     let download_map = rapid_store.get_missing_files_indices(&sdp_files);
-    file_download::download_sdp_files(rapid_store, &repo, &sdp, download_map, &sdp_files)
+    pool_downloader::download_sdp_files(rapid_store, &repo, &sdp, download_map, &sdp_files)
         .await
         .expect("Failed to download SDP files");
 }

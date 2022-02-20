@@ -6,4 +6,5 @@ pub mod validation;
 
 mod file_download;
 mod gz;
+mod pool_downloader;
 mod util;

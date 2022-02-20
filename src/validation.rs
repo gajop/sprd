@@ -1,11 +1,11 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use md5::{Digest, Md5};
 
 use crate::{
     api::DownloadOptions,
     metadata::{self, MetadataQueryError},
-    rapid::rapid_store::RapidStore,
+    rapid::{rapid_store::RapidStore, types::SdpPackage},
 };
 
 use super::rapid::{parsing, rapid_store};
@@ -48,27 +48,10 @@ pub fn validate_by_sdp_md5(rapid_store: &RapidStore, md5: &str) -> Result<(), Va
     let mut files_with_errors = Vec::new();
 
     for package in sdp_packages.iter() {
+        let validation = validate_sdp_package(rapid_store, package);
         let pool_path = rapid_store.get_pool_path(package);
-
-        if !pool_path.exists() {
-            files_with_errors.push((pool_path, FileError::Missing));
-            continue;
-        }
-
-        let parsed_gz = match crate::gz::read_binary_gz_from_file(&pool_path) {
-            Ok(pool_path) => pool_path,
-            Err(_) => {
-                files_with_errors.push((pool_path, FileError::Corrupt));
-                continue;
-            }
-        };
-
-        let mut hasher = Md5::new();
-        hasher.update(parsed_gz);
-        let result = &hasher.finalize()[..];
-
-        if result != package.md5_bin {
-            files_with_errors.push((pool_path, FileError::WrongHash));
+        if let Some(file_error) = validation {
+            files_with_errors.push((pool_path, file_error));
         }
     }
 
@@ -79,6 +62,34 @@ pub fn validate_by_sdp_md5(rapid_store: &RapidStore, md5: &str) -> Result<(), Va
     Err(ValidityErrors::InvalidFiles {
         files: files_with_errors,
     })
+}
+
+pub fn validate_sdp_package(rapid_store: &RapidStore, package: &SdpPackage) -> Option<FileError> {
+    let pool_path = rapid_store.get_pool_path(package);
+    validate_sdp_package_with_path(&pool_path, package.md5_bin)
+}
+
+pub fn validate_sdp_package_with_path(path: &Path, md5_bin: [u8; 16]) -> Option<FileError> {
+    if !path.exists() {
+        return Some(FileError::Missing);
+    }
+
+    let parsed_gz = match crate::gz::read_binary_gz_from_file(path) {
+        Ok(path) => path,
+        Err(_) => {
+            return Some(FileError::Corrupt);
+        }
+    };
+
+    let mut hasher = Md5::new();
+    hasher.update(parsed_gz);
+    let hashed = &hasher.finalize()[..];
+
+    if hashed != md5_bin {
+        return Some(FileError::WrongHash);
+    }
+
+    None
 }
 
 #[cfg(test)]

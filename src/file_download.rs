@@ -1,167 +1,21 @@
 use std::error::Error;
+use std::fs::File;
+use std::io::Write;
 use std::path;
 use std::str::FromStr;
 
 use hyper::body::HttpBody;
-use hyper::http::Request;
-use hyper::Uri;
 use hyper_tls::HttpsConnector;
-use tokio::fs::File;
-use tokio::io::AsyncWriteExt;
+// use tokio::fs::File;
+// use tokio::io::AsyncWriteExt;
 
 use indicatif::{ProgressBar, ProgressStyle};
 
-use super::gz;
 use super::rapid::{
     parsing::parse_repos_from_file,
     rapid_store::RapidStore,
-    types::{Repo, Sdp, SdpPackage},
+    types::{Repo, Sdp},
 };
-
-pub async fn download_sdp_files(
-    rapid_store: &RapidStore,
-    repo: &Repo,
-    sdp: &Sdp,
-    download_map: Vec<u8>,
-    sdp_files: &[SdpPackage],
-) -> Result<(), Box<dyn Error>> {
-    let url = format!("{}/streamer.cgi?{}", repo.url, sdp.md5);
-    let url = url.parse::<hyper::Uri>().unwrap();
-    // println!("{url}");
-
-    download_sdp_files_with_url(rapid_store, &url, download_map, sdp_files).await
-}
-
-pub async fn download_sdp_files_with_url(
-    rapid_store: &RapidStore,
-    url: &Uri,
-    download_map: Vec<u8>,
-    sdp_files: &[SdpPackage],
-) -> Result<(), Box<dyn Error>> {
-    assert_ne!(sdp_files.len(), 0);
-    assert!(download_map.iter().any(|f| *f != 0));
-    let gzipped = gz::gzip_data(download_map.as_slice())?;
-
-    let https = HttpsConnector::new();
-    let client = hyper::Client::builder().build::<_, hyper::Body>(https);
-
-    let req = Request::builder()
-        .method("POST")
-        .uri(url.to_string())
-        .body(hyper::Body::from(gzipped))
-        .expect("request builder");
-
-    let mut res = client.request(req).await?;
-
-    // let res = client.post(&url).body(gzipped).send().await?;
-    // let mut res = client.get(url).await?;
-
-    // println!("Response: {}", res.status());
-    // println!("Headers: {:#?}\n", res.headers());
-
-    let total_size = res
-        .headers()
-        .get("content-length")
-        .unwrap()
-        .to_str()
-        .unwrap();
-    let total_size = total_size.parse::<i64>().unwrap();
-
-    let mut downloaded_size = 0;
-    let mut size_bytes: [u8; 4] = [0; 4];
-    let mut size = 0;
-    let mut read_amount = 0;
-
-    let mut file_index = get_next_dl_file(rapid_store, sdp_files, 0).unwrap();
-    let mut sdp_file = &sdp_files[file_index];
-
-    let mut dest = rapid_store.get_pool_path(sdp_file);
-    std::fs::create_dir_all(dest.parent().expect("No parent directory"))?;
-    let mut file = File::create(dest).await?;
-    let mut file_read_size = 0;
-
-    const LENGTH_SIZE: usize = 4;
-
-    let pb_template: String =
-        "{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes} ({eta})"
-            .to_owned();
-    let pb = ProgressBar::new(total_size as u64);
-    pb.set_style(
-        ProgressStyle::default_bar()
-            .template(&pb_template)
-            .progress_chars("#>-"),
-    );
-
-    'top_loop: while let Some(next) = res.data().await {
-        let chunk = next?;
-        downloaded_size += chunk.len();
-
-        let mut chunk_index = 0;
-        while chunk_index < chunk.len() {
-            let chunk_remaining = chunk.len() - chunk_index;
-
-            if read_amount < LENGTH_SIZE {
-                let read_chunk = chunk_remaining.min(LENGTH_SIZE - read_amount);
-                for i in 0..read_chunk {
-                    size_bytes[read_amount + i] = chunk[chunk_index + i];
-                }
-                read_amount += read_chunk;
-                chunk_index += read_chunk;
-
-                if read_amount == LENGTH_SIZE {
-                    size = u32::from_be_bytes(size_bytes);
-                    // println!("File size: {}", size);
-                }
-            } else {
-                let read_chunk = chunk_remaining.min(size as usize - file_read_size);
-
-                file.write(&chunk[chunk_index..chunk_index + read_chunk])
-                    .await?;
-
-                file_read_size += read_chunk;
-                chunk_index += read_chunk;
-
-                if file_read_size == size as usize {
-                    file_index = match get_next_dl_file(rapid_store, sdp_files, file_index + 1) {
-                        Some(index) => index,
-                        None => break 'top_loop,
-                    };
-                    sdp_file = &sdp_files[file_index];
-
-                    dest = rapid_store.get_pool_path(sdp_file);
-                    std::fs::create_dir_all(dest.parent().unwrap())?;
-                    file = File::create(dest).await?;
-                    file_read_size = 0;
-
-                    size = 0;
-                    read_amount = 0;
-
-                    // println!("Downloading file: {}", sdp_file.name);
-                }
-            }
-        }
-
-        pb.set_position(downloaded_size as u64);
-    }
-    pb.finish_with_message("downloaded");
-
-    Ok(())
-}
-
-fn get_next_dl_file(
-    rapid_store: &RapidStore,
-    files: &[SdpPackage],
-    start_index: usize,
-) -> Option<usize> {
-    for (i, file) in files.iter().enumerate().skip(start_index) {
-        let file_path = rapid_store.get_pool_path(file);
-        if !file_path.exists() {
-            return Some(i);
-        }
-    }
-
-    None
-}
 
 pub async fn download_sdp(
     rapid_store: &RapidStore,
@@ -220,7 +74,8 @@ pub async fn download_file(
     // (instead of buffering and printing at the end).
     let mut downloaded_size = 0;
     std::fs::create_dir_all(dest.parent().unwrap())?;
-    let mut file = File::create(dest).await?;
+    // let mut file = File::create(dest).await?;
+    let mut file = File::create(dest)?;
 
     let mut pb_template: String =
         "{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes} ({eta})"
@@ -239,7 +94,8 @@ pub async fn download_file(
         downloaded_size += chunk.len();
         pb.set_position(downloaded_size as u64);
 
-        file.write_all(&chunk).await?;
+        // file.write_all(&chunk).await?;
+        file.write_all(&chunk)?;
     }
     pb.finish_with_message("downloaded");
 

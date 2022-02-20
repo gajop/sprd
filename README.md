@@ -37,14 +37,13 @@ This project is under construction and not ready for use.
 
 Below you can see my very rough roadmap:
 
-WIP :construction:
-Output:
+### :construction In progress:
 - New output types: Interactive, Json, Piped (like Interactive but pipable to files), Silent and Auto
 
-:bookmark: Dev preview:
+### :bookmark: Dev preview:
 - Improve command naming: download-repo is especially deceptive
 
-:bookmark: Dev release:
+### :bookmark: Dev release:
 - Statically link it
 - Pool downloader autofix files
 - Check validity of other metadata files too: save size & gz validity
@@ -53,7 +52,8 @@ Output:
 - Add --help to README.md
 - Add contribution guidelines
 
-:memo: TODO:
+### :memo: TODO:
+
 Pool downloader:
 - pool downloader tests without internet connectivity (save downloads to files)
 - Back to fully async IO (file): use tokio::fs, figure out what was causing the partial write issue despite write_all

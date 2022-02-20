@@ -165,7 +165,7 @@ pub async fn download_sdp_files_with_url(
         let pool_path = rapid_store.get_pool_path(sdp_package);
         match validation {
             None => {
-                println!("File OK: {pool_path:?}");
+                // println!("File OK: {pool_path:?}");
             }
             Some(err) => {
                 println!("Invalid file: {err:?} {pool_path:?}");

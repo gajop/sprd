@@ -43,5 +43,7 @@ Downloader:
 Docs:
 - Add description. What does this program do?
 - Add --help to README.md
+- Dual license with MIT & Apache
+- Add contribution guidelines
 
  -->

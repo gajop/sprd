@@ -1,4 +1,7 @@
-use std::{path::PathBuf, process::Command};
+use std::{
+    path::{Path, PathBuf},
+    process::Command,
+};
 
 use sprd::{api, cmds, rapid::rapid_store};
 
@@ -12,7 +15,15 @@ pub fn setup_pr_downloader_folders() -> PathBuf {
 
     println!("Setting up prd folders. This might take a while...");
     std::fs::create_dir_all(&path).unwrap();
-    let output = Command::new("pr-downloader")
+
+    let program = if Path::new("./pr-downloader").exists() {
+        println!("Found local pr-downloader");
+        "./pr-downloader"
+    } else {
+        println!("Couldn't find local pr-downloader. Falling back to system one - hopefully it's installed");
+        "pr-downloader"
+    };
+    let output = Command::new(program)
         .arg("--filesystem-writepath")
         .arg("test_folders/test_prd")
         .arg("--download-game")

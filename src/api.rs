@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::event::{Print, PrintOutput};
+use crate::event::{Print, SilentOutput};
 
 pub enum MetadataSource {
     Local,
@@ -17,7 +17,7 @@ impl Default for DownloadOptions {
     fn default() -> Self {
         DownloadOptions {
             metadata_source: MetadataSource::FileApi,
-            print: Arc::new(Box::new(PrintOutput {})),
+            print: Arc::new(Box::new(SilentOutput {})),
         }
     }
 }

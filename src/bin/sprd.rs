@@ -12,6 +12,8 @@ use sprd::{
     rapid,
 };
 
+use atty::Stream;
+
 mod output;
 
 #[derive(Parser)]
@@ -20,7 +22,7 @@ struct Args {
     #[clap(short, long)]
     root_folder: Option<PathBuf>,
 
-    #[clap(short, long, arg_enum, default_value_t = PrintType::Interactive)]
+    #[clap(short, long, arg_enum, default_value_t = PrintType::Auto)]
     print: PrintType,
 
     #[clap(subcommand)]
@@ -67,7 +69,13 @@ async fn main() {
     let mut opts = DownloadOptions {
         print: match args.print {
             PrintType::Silent => Arc::new(Box::new(SilentOutput {})),
-            PrintType::Auto => unimplemented!("Implement output detection"),
+            PrintType::Auto => {
+                if atty::is(Stream::Stdout) {
+                    Arc::new(Box::new(InteractiveOutput::new()))
+                } else {
+                    Arc::new(Box::new(PrintOutput {}))
+                }
+            }
             PrintType::Json => Arc::new(Box::new(JsonOutput::new())),
             PrintType::Print => Arc::new(Box::new(PrintOutput {})),
             PrintType::Interactive => Arc::new(Box::new(InteractiveOutput::new())),

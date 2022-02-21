@@ -99,17 +99,16 @@ This project is under construction and not ready for use.
 Below you can see my very rough roadmap:
 
 ### :construction: In progress:
-- New output types: Auto
+- Avoid panic in library code, use explitic errors instead of `<dyn Error>`
 
 ### :bookmark: Dev release:
 - Improve command naming: download-repo is especially deceptive
-- Avoid panic in library code, use explitic errors instead of `<dyn Error>`
 - Pool downloader autofix files
 - Check validity of other metadata files too: save size & gz validity
 - Auto-retry
 - Statically link it
 
-### :memo: TODO:
+### :memo: Backlog:
 
 Pool downloader:
 - pool downloader tests without internet connectivity (save downloads to files)

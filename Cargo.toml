@@ -21,6 +21,7 @@ thiserror = "1.0"
 tokio = {version = "1.16.1", features = ["full"]}
 
 # TODO: Binary only, remove from lib
+atty = "0.2"
 clap = {version = "3.0.14", features = ["derive"]}
 indicatif = "0.16.2"
 serde_json = "1.0"

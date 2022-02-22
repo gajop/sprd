@@ -7,13 +7,13 @@ use clap::{ArgEnum, Parser, Subcommand};
 use output::{interactive::InteractiveOutput, json::JsonOutput};
 use sprd::{
     api::{DownloadOptions, MetadataSource},
-    cmds,
     event::{PrintOutput, SilentOutput},
     rapid,
 };
 
 use atty::Stream;
 
+mod cmds;
 mod output;
 
 #[derive(Parser)]

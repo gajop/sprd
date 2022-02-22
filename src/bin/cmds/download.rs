@@ -1,6 +1,6 @@
 use anyhow::Context;
 
-use crate::{
+use sprd::{
     api::DownloadOptions, metadata, pool_downloader, rapid::rapid_store::RapidStore,
     validation::check_if_sdp_needs_download,
 };

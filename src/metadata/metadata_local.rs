@@ -31,13 +31,8 @@ pub async fn query_repo(
     rapid_store: &RapidStore,
     repo_basename: &str,
 ) -> Result<Option<Repo>, MetadataQueryError> {
-    let repo_registry =
-        match rapid::parsing::parse_repos_from_file(&rapid_store.get_registry_path()) {
-            Err(err) => {
-                return Err(MetadataQueryError::CorruptFile(err));
-            }
-            Ok(repo_registry) => repo_registry,
-        };
+    let repo_registry = rapid::parsing::parse_repos_from_file(&rapid_store.get_registry_path())
+        .map_err(|e| MetadataQueryError::CorruptFile(e.into()))?;
 
     Ok(repo_registry.into_iter().find(|r| r.name == repo_basename))
 }
@@ -49,7 +44,7 @@ pub async fn query_sdp(
 ) -> Result<Option<Sdp>, MetadataQueryError> {
     rapid_store
         .find_sdp(repo, fullname)
-        .map_err(|e| MetadataQueryError::CorruptFile(e))
+        .map_err(|e| MetadataQueryError::CorruptFile(e.into()))
     // return match rapid_store.find_sdp(repo, fullname) {
     //     Err(err) => {
     //         println!(
@@ -62,12 +57,15 @@ pub async fn query_sdp(
     // };
 }
 
-pub async fn query_sdp_files(rapid_store: &RapidStore, sdp: &Sdp) -> Vec<SdpPackage> {
+pub async fn query_sdp_files(
+    rapid_store: &RapidStore,
+    sdp: &Sdp,
+) -> Result<Vec<SdpPackage>, MetadataQueryError> {
     let dest_sdp = rapid_store.get_sdp_path(sdp);
     assert!(dest_sdp.exists());
 
     rapid::parsing::load_sdp_packages_from_file(&dest_sdp)
-        .expect("Failed to load SDP Package from file")
+        .map_err(|e| MetadataQueryError::CorruptFile(e.into()))
 }
 
 #[cfg(test)]
@@ -96,7 +94,7 @@ mod tests {
 
         let mut sprd_files = HashSet::new();
 
-        let sdp_files = query_sdp_files(&rapid_store, &sdp).await;
+        let sdp_files = query_sdp_files(&rapid_store, &sdp).await.unwrap();
         for sdp_file in sdp_files.iter() {
             let dest = rapid_store.get_pool_path(sdp_file);
             sprd_files.insert(format!(

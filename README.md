@@ -99,7 +99,7 @@ This project is under construction and not ready for use.
 Below you can see my very rough roadmap:
 
 ### :construction: In progress:
-- Avoid panic in library code, use explitic errors instead of `<dyn Error>`
+
 
 ### :bookmark: Dev release:
 - Improve command naming: download-repo is especially deceptive

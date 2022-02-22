@@ -1,16 +1,26 @@
-use std::error::Error;
 use std::path;
 use std::str;
 use std::u32;
 
+use thiserror::Error;
+
+use crate::gz::GzReadError;
+
 use super::types::{Repo, Sdp, SdpPackage};
 
-pub fn parse_repos_from_file(path: &path::Path) -> Result<Vec<Repo>, Box<dyn Error>> {
-    let s = crate::gz::read_gz_from_file(path)?;
-    parse_repos_from_str(&s)
+#[derive(Error, Debug)]
+#[error("Corrupt Sdp Package")]
+pub struct CorruptSdpPackage {
+    #[source]
+    source: anyhow::Error,
 }
 
-pub fn parse_repos_from_str(s: &str) -> Result<Vec<Repo>, Box<dyn Error>> {
+pub fn parse_repos_from_file(path: &path::Path) -> Result<Vec<Repo>, GzReadError> {
+    let s = crate::gz::read_gz_from_file(path)?;
+    Ok(parse_repos_from_str(&s))
+}
+
+pub fn parse_repos_from_str(s: &str) -> Vec<Repo> {
     let mut entries = Vec::new();
 
     for line in s.lines() {
@@ -24,21 +34,21 @@ pub fn parse_repos_from_str(s: &str) -> Result<Vec<Repo>, Box<dyn Error>> {
         });
     }
 
-    Ok(entries)
+    entries
 }
 
-pub fn read_rapid_from_file(path: &path::Path) -> Result<Vec<Sdp>, Box<dyn Error>> {
+pub fn read_rapid_from_file(path: &path::Path) -> Result<Vec<Sdp>, GzReadError> {
     let parsed_gz = crate::gz::read_gz_from_file(path)?;
-    read_rapid_from_str(&parsed_gz)
+    Ok(read_rapid_from_str(&parsed_gz))
 }
 
-pub fn read_rapid_from_str(parsed_gz: &str) -> Result<Vec<Sdp>, Box<dyn Error>> {
+pub fn read_rapid_from_str(parsed_gz: &str) -> Vec<Sdp> {
     let mut entries = Vec::new();
 
     for line in parsed_gz.lines() {
         let line_entry: Vec<&str> = line.split(',').collect();
         if line_entry.len() != 4 {
-            println!("MALFORMED FILE");
+            println!("MALFORMED FILE"); // ignore?
             continue;
         }
         entries.push(Sdp {
@@ -49,16 +59,19 @@ pub fn read_rapid_from_str(parsed_gz: &str) -> Result<Vec<Sdp>, Box<dyn Error>> 
         });
     }
 
-    Ok(entries)
+    entries
 }
 
-pub fn load_sdp_packages_from_file(dest: &path::Path) -> Result<Vec<SdpPackage>, Box<dyn Error>> {
-    let data = crate::gz::read_binary_gz_from_file(dest)?;
+pub fn load_sdp_packages_from_file(
+    dest: &path::Path,
+) -> Result<Vec<SdpPackage>, CorruptSdpPackage> {
+    let data = crate::gz::read_binary_gz_from_file(dest)
+        .map_err(|e| CorruptSdpPackage { source: e.into() })?;
 
     load_sdp_packages(&data)
 }
 
-pub fn load_sdp_packages(data: &[u8]) -> Result<Vec<SdpPackage>, Box<dyn Error>> {
+pub fn load_sdp_packages(data: &[u8]) -> Result<Vec<SdpPackage>, CorruptSdpPackage> {
     let mut sdp_files = Vec::new();
 
     let mut index = 0;
@@ -66,7 +79,8 @@ pub fn load_sdp_packages(data: &[u8]) -> Result<Vec<SdpPackage>, Box<dyn Error>>
         let length = data[index] as usize;
         index += 1;
 
-        let name = str::from_utf8(&data[index..index + length]).unwrap();
+        let name = str::from_utf8(&data[index..index + length])
+            .map_err(|e| CorruptSdpPackage { source: e.into() })?;
         index += length;
 
         let md5_bin = &data[index..index + 16];

@@ -42,8 +42,9 @@ pub async fn validate_by_fullname(
 pub fn validate_by_sdp_md5(rapid_store: &RapidStore, md5: &str) -> Result<(), ValidityErrors> {
     let sdp_path = rapid_store.get_sdp_path_from_md5(md5);
 
-    let sdp_packages = parsing::load_sdp_packages_from_file(&sdp_path)
-        .map_err(|e| ValidityErrors::MetadataQueryError(MetadataQueryError::CorruptFile(e)))?;
+    let sdp_packages = parsing::load_sdp_packages_from_file(&sdp_path).map_err(|e| {
+        ValidityErrors::MetadataQueryError(MetadataQueryError::CorruptFile(e.into()))
+    })?;
 
     let mut files_with_errors = Vec::new();
 

@@ -1,4 +1,3 @@
-use std::error::Error;
 use thiserror::Error;
 
 use crate::{
@@ -17,10 +16,10 @@ mod metadata_rest;
 #[derive(Error, Debug)]
 pub enum MetadataQueryError {
     #[error("corrupt file")]
-    CorruptFile(#[source] Box<dyn Error>),
+    CorruptFile(#[source] anyhow::Error),
 
     #[error("download failed")]
-    DownloadFailed(#[source] Box<dyn Error>),
+    DownloadFailed(#[source] anyhow::Error),
 }
 
 pub async fn query_metadata(
@@ -73,7 +72,7 @@ pub async fn query_sdp_files(
     opts: &DownloadOptions,
     repo: &Repo,
     sdp: &Sdp,
-) -> Vec<SdpPackage> {
+) -> Result<Vec<SdpPackage>, MetadataQueryError> {
     match &opts.metadata_source {
         MetadataSource::Local => metadata_local::query_sdp_files(rapid_store, sdp).await,
         MetadataSource::FileApi => {

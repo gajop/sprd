@@ -1,11 +1,10 @@
-use std::error::Error;
+use std::array::TryFromSliceError;
 use std::fs::{self, File};
 use std::io::Write;
 
+use anyhow::Context;
 use hyper::body::HttpBody;
-use hyper::http::Request;
-use hyper::{Body, Response, Uri};
-use hyper_tls::HttpsConnector;
+use hyper::{Body, Request, Response, Uri};
 
 // TODO: Start using tokio file IO again once we fix .write_all()
 // use tokio::fs::File;
@@ -15,6 +14,8 @@ use thiserror::Error;
 
 use crate::api::DownloadOptions;
 use crate::event::Event;
+use crate::file_download::FileDownloadError;
+use crate::http_download::{http_download_with_request, ResponseWithSize};
 use crate::validation::validate_sdp_package;
 
 use super::gz;
@@ -30,12 +31,13 @@ pub async fn download_sdp_files(
     sdp: &Sdp,
     download_map: Vec<u8>,
     sdp_files: &[SdpPackage],
-) -> Result<(), Box<dyn Error>> {
+) -> Result<(), FileDownloadError> {
     let url = format!("{}/streamer.cgi?{}", repo.url, sdp.md5);
-    let url = url.parse::<hyper::Uri>().unwrap();
-    // println!("{url}");
+    let url = url
+        .parse::<hyper::Uri>()
+        .map_err(FileDownloadError::InvalidUri)?;
 
-    download_sdp_files_with_url(rapid_store, opts, &url, download_map, sdp_files).await
+    download_sdp_files_with_url(rapid_store, opts, url, download_map, sdp_files).await
 }
 
 struct BufferedReader {
@@ -99,48 +101,35 @@ impl BufferedReader {
     }
 }
 
-fn slice_to_u4(slice: &[u8]) -> [u8; 4] {
-    slice
-        .try_into()
-        .unwrap_or_else(|e| panic!("slice with incorrect length: {} {e:?}", slice.len()))
+fn slice_to_u4(slice: &[u8]) -> Result<[u8; 4], TryFromSliceError> {
+    let u4: [u8; 4] = slice.try_into()?;
+    Ok(u4)
 }
 
 pub async fn download_sdp_files_with_url(
     rapid_store: &RapidStore,
     opts: &DownloadOptions,
-    url: &Uri,
+    url: Uri,
     download_map: Vec<u8>,
     sdp_files: &[SdpPackage],
-) -> Result<(), Box<dyn Error>> {
+) -> Result<(), FileDownloadError> {
     assert_ne!(sdp_files.len(), 0);
     assert!(download_map.iter().any(|f| *f != 0));
-    let gzipped = gz::gzip_data(download_map.as_slice())?;
-
-    let https = HttpsConnector::new();
-    let client = hyper::Client::builder().build::<_, hyper::Body>(https);
+    let gzipped = gz::gzip_data(download_map.as_slice())
+        .map_err(|e| FileDownloadError::FilesystemError(e.into()))?;
 
     let req = Request::builder()
         .method("POST")
-        .uri(url.to_string())
+        .uri(url)
         .body(hyper::Body::from(gzipped))
-        .expect("request builder");
-
-    let res = client.request(req).await?;
-
-    let total_size = res
-        .headers()
-        .get("content-length")
-        .unwrap()
-        .to_str()
-        .unwrap();
-    let total_size = total_size.parse::<i64>().unwrap();
+        .map_err(|e| FileDownloadError::InvalidServerResponse(e.into()))?;
+    let ResponseWithSize { res, size } = http_download_with_request(req).await?;
 
     const LENGTH_SIZE: usize = 4;
 
     let mut reader = BufferedReader::new(res);
     let mut downloaded_size = 0;
-    opts.print
-        .event(Event::DownloadStarted(total_size as usize));
+    opts.print.event(Event::DownloadStarted(size));
     let print_function = opts.print.clone();
     reader.set_progress_function(Box::new(move |downloaded: usize| {
         downloaded_size += downloaded;
@@ -148,26 +137,52 @@ pub async fn download_sdp_files_with_url(
     }));
     let missing_files = rapid_store.find_missing_files(sdp_files);
     for sdp_package in missing_files.iter() {
-        let file_size = reader.read_amount(LENGTH_SIZE).await.map_err(Box::new)?;
-        let file_size = u32::from_be_bytes(slice_to_u4(&file_size)) as usize;
+        let file_size = reader
+            .read_amount(LENGTH_SIZE)
+            .await
+            .map_err(|e| FileDownloadError::InvalidServerResponse(e.into()))?;
+        let file_size = u32::from_be_bytes(
+            slice_to_u4(&file_size)
+                .map_err(|e| FileDownloadError::InvalidServerResponse(e.into()))?,
+        ) as usize;
 
-        let file_data = reader.read_amount(file_size).await.map_err(Box::new)?;
+        let file_data = reader
+            .read_amount(file_size)
+            .await
+            .map_err(|e| FileDownloadError::InvalidServerResponse(e.into()))?;
 
         let dest = rapid_store.get_pool_path(sdp_package);
-        std::fs::create_dir_all(dest.parent().expect("No parent directory"))?;
-        let mut file = File::create(&dest)?;
-        file.write_all(&file_data)?;
-        file.flush()?;
+        std::fs::create_dir_all(
+            dest.parent()
+                .context(format!("No parent directory for path: {dest:?}"))
+                .map_err(FileDownloadError::FilesystemError)?,
+        )
+        .map_err(|e| FileDownloadError::FilesystemError(e.into()))?;
+        let mut file =
+            File::create(&dest).map_err(|e| FileDownloadError::FilesystemError(e.into()))?;
+        file.write_all(&file_data)
+            .map_err(|e| FileDownloadError::FilesystemError(e.into()))?;
+        file.flush()
+            .map_err(|e| FileDownloadError::FilesystemError(e.into()))?;
         // let mut file = File::create(&dest).await?;
         // file.write(&file_data).await?;
         // file.flush().await?;
 
-        let file_size_on_disk = fs::metadata(dest).unwrap().len();
-        if (file_size_on_disk as usize) != file_size as usize {
-            opts.print.event(Event::Error(format!(
-                "File size on disk ({file_size_on_disk}) different than in memory ({file_size})"
-            )));
-        }
+        match fs::metadata(&dest) {
+            Ok(metadata) => {
+                let file_size_on_disk = metadata.len();
+                if (file_size_on_disk as usize) != file_size as usize {
+                    opts.print.event(Event::Error(format!(
+                        "File ({dest:?}) size on disk ({file_size_on_disk}) different than in memory ({file_size})"
+                    )));
+                }
+            }
+            Err(err) => {
+                opts.print.event(Event::Error(format!(
+                    "Cannot obtain file ({dest:?}) disk size ({err:?}). Unable to verify correctness ({file_size})"
+                )));
+            }
+        };
 
         let validation = validate_sdp_package(rapid_store, sdp_package);
         let pool_path = rapid_store.get_pool_path(sdp_package);
@@ -183,7 +198,10 @@ pub async fn download_sdp_files_with_url(
     }
     opts.print.event(Event::DownloadFinished {});
 
-    let remaining = reader.read_remainder().await?;
+    let remaining = reader
+        .read_remainder()
+        .await
+        .map_err(|e| FileDownloadError::InvalidServerResponse(e.into()))?;
     if !remaining.is_empty() {
         opts.print.event(Event::Error(format!(
             "There are {} bytes remaining in the stream, should be empty.",

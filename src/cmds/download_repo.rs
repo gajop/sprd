@@ -20,7 +20,7 @@ pub async fn download_repo(rapid_store: &RapidStore, opts: &DownloadOptions, rep
     };
 }
 
-fn handle_errors(result: Result<(), Box<dyn std::error::Error>>, opts: &DownloadOptions) {
+fn handle_errors(result: anyhow::Result<()>, opts: &DownloadOptions) {
     match result {
         Ok(()) => opts
             .print
@@ -35,14 +35,14 @@ async fn download_one_repo(
     rapid_store: &RapidStore,
     opts: &DownloadOptions,
     repo: &str,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> anyhow::Result<()> {
     let mut attempt = 0;
     let repo_registry = loop {
         match rapid::parsing::parse_repos_from_file(&rapid_store.get_registry_path()) {
             Err(err) => {
                 attempt += 1;
                 if attempt >= 5 {
-                    return Err(err);
+                    return Err(err.into());
                 }
                 file_download::download_repo_registry(rapid_store, opts).await?;
             }
@@ -55,14 +55,18 @@ async fn download_one_repo(
         .find(|r| r.name == repo)
         .ok_or_else(|| Box::new(Errors::NoSuchRepo))?;
 
-    file_download::download_repo(rapid_store, opts, &repo).await
+    file_download::download_repo(rapid_store, opts, &repo)
+        .await
+        .map_err(|e| e.into())
 }
 
 async fn download_all_repos(
     rapid_store: &RapidStore,
     opts: &DownloadOptions,
-) -> Result<(), Box<dyn std::error::Error>> {
-    file_download::download_all_repos(rapid_store, opts).await
+) -> anyhow::Result<()> {
+    file_download::download_all_repos(rapid_store, opts)
+        .await
+        .map_err(|e| e.into())
 }
 
 #[cfg(test)]

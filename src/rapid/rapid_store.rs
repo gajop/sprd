@@ -1,5 +1,6 @@
-use std::error::Error;
 use std::path::{self, PathBuf};
+
+use crate::gz::GzReadError;
 
 use super::super::util;
 use super::parsing::read_rapid_from_file;
@@ -27,7 +28,7 @@ impl RapidStore {
     //     Ok(repos.into_iter().find(|repo| repo.name.contains(name)))
     // }
 
-    pub fn find_sdp(&self, repo: &Repo, name: &str) -> Result<Option<Sdp>, Box<dyn Error>> {
+    pub fn find_sdp(&self, repo: &Repo, name: &str) -> Result<Option<Sdp>, GzReadError> {
         let repo_path = self.root_folder.join(&format!(
             "rapid/repos.springrts.com/{}/versions.gz",
             repo.name

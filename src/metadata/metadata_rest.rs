@@ -16,10 +16,10 @@ pub async fn query_repo(
 ) -> Result<Option<Repo>, MetadataQueryError> {
     let resp = reqwest::get(format!("{server}/repo/{repo_basename}"))
         .await
-        .map_err(|e| MetadataQueryError::DownloadFailed(Box::new(e)))?
+        .map_err(|e| MetadataQueryError::DownloadFailed(e.into()))?
         .json::<RepoResponse>()
         .await
-        .map_err(|e| MetadataQueryError::DownloadFailed(Box::new(e)))?;
+        .map_err(|e| MetadataQueryError::DownloadFailed(e.into()))?;
 
     Ok(Some(Repo {
         name: resp.name,
@@ -49,10 +49,10 @@ pub async fn query_metadata(
 ) -> Result<Option<(Repo, Sdp)>, MetadataQueryError> {
     let resp = reqwest::get(format!("{server}/sdp/{fullname}"))
         .await
-        .map_err(|e| MetadataQueryError::DownloadFailed(Box::new(e)))?
+        .map_err(|e| MetadataQueryError::DownloadFailed(e.into()))?
         .json::<SdpResponse>()
         .await
-        .map_err(|e| MetadataQueryError::DownloadFailed(Box::new(e)))?;
+        .map_err(|e| MetadataQueryError::DownloadFailed(e.into()))?;
 
     let rapid = resp.rapid;
     let repo = resp.repo;

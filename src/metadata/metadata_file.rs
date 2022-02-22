@@ -14,15 +14,12 @@ pub async fn query_sdp_files(
     opts: &DownloadOptions,
     repo: &Repo,
     sdp: &Sdp,
-) -> Vec<SdpPackage> {
+) -> Result<Vec<SdpPackage>, MetadataQueryError> {
     let dest_sdp = rapid_store.get_sdp_path(sdp);
     if !dest_sdp.exists() {
-        match file_download::download_sdp(rapid_store, opts, repo, sdp).await {
-            Ok(_) => {}
-            Err(err) => {
-                panic!("Failed to download SDP: {err}");
-            }
-        }
+        file_download::download_sdp(rapid_store, opts, repo, sdp)
+            .await
+            .map_err(|e| MetadataQueryError::DownloadFailed(e.into()))?;
     }
     metadata_local::query_sdp_files(rapid_store, sdp).await
 }
@@ -54,7 +51,7 @@ pub async fn query_repo(
     // if !rapid_store.get_registry_path().exists() {
     file_download::download_repo_registry(rapid_store, opts)
         .await
-        .map_err(|e| MetadataQueryError::DownloadFailed(e))?;
+        .map_err(|e| MetadataQueryError::DownloadFailed(e.into()))?;
     // }
 
     metadata_local::query_repo(rapid_store, repo_basename).await
@@ -68,7 +65,7 @@ pub async fn query_sdp(
 ) -> Result<Option<Sdp>, MetadataQueryError> {
     file_download::download_repo(rapid_store, opts, repo)
         .await
-        .map_err(|e| MetadataQueryError::DownloadFailed(e))?;
+        .map_err(|e| MetadataQueryError::DownloadFailed(e.into()))?;
 
     metadata_local::query_sdp(rapid_store, repo, fullname).await
 }

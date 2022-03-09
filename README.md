@@ -106,7 +106,6 @@ Below you can see my very rough roadmap:
 - Pool downloader autofix files
 - Check validity of other metadata files too: save size & gz validity
 - Auto-retry
-- Statically link it
 
 ### :memo: Backlog:
 

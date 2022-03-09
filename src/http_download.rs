@@ -1,5 +1,5 @@
-use hyper::{Body, Request, Response};
-use hyper_tls::HttpsConnector;
+use hyper::{Body, Client, Request, Response};
+use hyper_rustls::HttpsConnectorBuilder;
 use thiserror::Error;
 
 use crate::file_download::FileDownloadError;
@@ -16,8 +16,12 @@ pub struct ResponseWithSize {
 pub async fn http_download_with_url(
     url: hyper::Uri,
 ) -> Result<ResponseWithSize, FileDownloadError> {
-    let https = HttpsConnector::new();
-    let client = hyper::Client::builder().build::<_, hyper::Body>(https);
+    let https = HttpsConnectorBuilder::new()
+        .with_native_roots()
+        .https_only()
+        .enable_http1()
+        .build();
+    let client = Client::builder().build::<_, Body>(https);
 
     let res = client
         .get(url.clone())
@@ -43,8 +47,12 @@ pub async fn http_download_with_url(
 pub async fn http_download_with_request(
     request: Request<Body>,
 ) -> Result<ResponseWithSize, FileDownloadError> {
-    let https = HttpsConnector::new();
-    let client = hyper::Client::builder().build::<_, hyper::Body>(https);
+    let https = HttpsConnectorBuilder::new()
+        .with_native_roots()
+        .https_only()
+        .enable_http1()
+        .build();
+    let client = Client::builder().build::<_, Body>(https);
 
     let res = client
         .request(request)

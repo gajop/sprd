@@ -3,7 +3,7 @@ use std::{
     process::Command,
 };
 
-use sprd::{api, cmds, rapid::rapid_store};
+use sprd::{api, rapid::rapid_store, rapid_download};
 
 // These tests require that you have pr-downloader installed and available in Path.
 
@@ -41,7 +41,9 @@ pub fn setup_pr_downloader_folders() -> PathBuf {
 pub async fn setup_sprd_folders() -> PathBuf {
     let root_folder = PathBuf::from("test_folders/test_sprd");
     let rapid_store = rapid_store::RapidStore::new(root_folder.clone());
-    cmds::download(&rapid_store, &api::DownloadOptions::default(), TEST_TAG).await;
+    rapid_download::download(&rapid_store, &api::DownloadOptions::default(), TEST_TAG)
+        .await
+        .unwrap();
 
     root_folder
 }

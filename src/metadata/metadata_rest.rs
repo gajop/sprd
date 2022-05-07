@@ -62,10 +62,10 @@ pub async fn query_metadata(
             url: repo.url,
         },
         Sdp {
-            fullname: rapid.fullname,
-            something: rapid.something,
+            rapid_name: rapid.fullname,
+            depends: rapid.something,
             md5: rapid.hash,
-            alias: rapid.alias,
+            archive_name: rapid.alias,
         },
     )))
 }
@@ -111,7 +111,7 @@ mod tests {
             .await
             .unwrap()
             .unwrap();
-        assert_eq!(sdp.fullname, "sbc:test");
+        assert_eq!(sdp.rapid_name, "sbc:test");
 
         let rapid_store = rapid::rapid_store::RapidStore::default();
 

@@ -8,6 +8,11 @@ use thiserror::Error;
 // use tokio::fs::File;
 // use tokio::io::AsyncWriteExt;
 
+use super::rapid::{
+    parsing::parse_repos_from_file,
+    rapid_store::RapidStore,
+    types::{Repo, Sdp},
+};
 use crate::{
     api::DownloadOptions,
     event::Event,
@@ -29,12 +34,6 @@ pub enum FileDownloadError {
 #[derive(Debug, Error)]
 #[error("No parent folder")]
 struct NoParentFolder {}
-
-use super::rapid::{
-    parsing::parse_repos_from_file,
-    rapid_store::RapidStore,
-    types::{Repo, Sdp},
-};
 
 pub async fn download_sdp(
     rapid_store: &RapidStore,

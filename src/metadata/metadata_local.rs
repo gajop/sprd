@@ -1,5 +1,6 @@
 use crate::rapid::{
     self,
+    parsing::parse_repos_from_file,
     rapid_store::RapidStore,
     types::{Repo, Sdp, SdpPackage},
 };
@@ -11,8 +12,44 @@ pub async fn query_metadata(
     fullname: &str,
 ) -> Result<Option<(Repo, Sdp)>, MetadataQueryError> {
     let repo_tag = fullname.split(':').collect::<Vec<&str>>();
-    let repo_basename = repo_tag[0];
+    if repo_tag.len() >= 2 {
+        let result = query_metadata_with_tag(rapid_store, fullname, repo_tag[0]).await?;
 
+        if result.is_some() {
+            return Ok(result);
+        }
+    }
+
+    query_metadata_with_name(rapid_store, fullname).await
+}
+
+pub async fn query_metadata_with_name(
+    rapid_store: &RapidStore,
+    fullname: &str,
+) -> Result<Option<(Repo, Sdp)>, MetadataQueryError> {
+    let registry_file = rapid_store.get_registry_path();
+    let repos = parse_repos_from_file(&registry_file)
+        .map_err(|e| MetadataQueryError::CorruptFile(e.into()))?;
+
+    for repo in repos {
+        let sdp = query_sdp(rapid_store, &repo, fullname).await;
+        let sdp = match sdp {
+            Err(_) => continue,
+            Ok(sdp) => sdp,
+        };
+        if let Some(sdp) = sdp {
+            return Ok(Some((repo, sdp)));
+        }
+    }
+
+    Ok(None)
+}
+
+pub async fn query_metadata_with_tag(
+    rapid_store: &RapidStore,
+    fullname: &str,
+    repo_basename: &str,
+) -> Result<Option<(Repo, Sdp)>, MetadataQueryError> {
     let repo = match query_repo(rapid_store, repo_basename).await? {
         None => return Ok(None),
         Some(repo) => repo,
@@ -81,6 +118,31 @@ mod tests {
     use super::*;
 
     #[tokio::test]
+    async fn test_query_sdp() {
+        let query_names = [
+            "sbc:git:860aac5eb5ce292121b741ca8514516777ae14dc",
+            "SpringBoard Core 0.5.2",
+            "sbc:test",
+            "sbc:stable",
+        ];
+        let repo = Repo {
+            name: "sbc".to_string(),
+            url: "".to_string(),
+        };
+
+        let rapid_store = RapidStore::new(test_utils::setup_pr_downloader_folders());
+
+        for fullname in query_names {
+            let sdp = query_sdp(&rapid_store, &repo, fullname).await;
+
+            assert!(sdp.is_ok(), "Sdp is Err for {fullname}: {repo:?}");
+            let sdp = sdp.unwrap();
+            assert!(sdp.is_some(), "Sdp is None for {fullname}: {repo:?}");
+            // let sdp = sdp.unwrap();
+        }
+    }
+
+    #[tokio::test]
     async fn test_query_by_rapid_version() {
         let query_names = [
             "sbc:git:860aac5eb5ce292121b741ca8514516777ae14dc",
@@ -94,7 +156,7 @@ mod tests {
         for query_name in query_names {
             let result = query_metadata(&rapid_store, query_name).await;
 
-            assert!(result.is_ok(), "Query is Err: {query_name}");
+            assert!(result.is_ok(), "Query is Err: {query_name} ({result:?})");
             assert!(result.unwrap().is_some(), "Query is None: {query_name}");
         }
     }

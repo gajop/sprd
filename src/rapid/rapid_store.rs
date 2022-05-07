@@ -6,6 +6,7 @@ use super::super::util;
 use super::parsing::read_rapid_from_file;
 use super::types::{Repo, Sdp, SdpPackage};
 
+#[derive(Debug)]
 pub struct RapidStore {
     pub root: PathBuf,
 }
@@ -36,7 +37,7 @@ impl RapidStore {
         let sdps = read_rapid_from_file(&repo_path)?;
         Ok(sdps
             .into_iter()
-            .find(|sdp| sdp.fullname == name || sdp.alias == name))
+            .find(|sdp| sdp.rapid_name == name || sdp.archive_name == name))
     }
 
     pub fn find_missing_files<'a>(&self, sdp_files: &'a [SdpPackage]) -> Vec<&'a SdpPackage> {
@@ -114,5 +115,24 @@ mod tests {
             .unwrap();
 
         assert_eq!(sdp.md5, "d80d786597510d1358be3b04a7e9146e");
+        assert_eq!(sdp.archive_name, "SpringBoard Core 0.5.2");
+    }
+
+    #[tokio::test]
+    async fn test_find_sdp_by_name() {
+        let rapid_store = RapidStore::new(test_utils::setup_sprd_folders().await);
+        let sdp = rapid_store
+            .find_sdp(
+                &Repo {
+                    name: "sbc".to_owned(),
+                    url: "-unused-".to_owned(),
+                },
+                "SpringBoard Core 0.5.2",
+            )
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(sdp.md5, "d80d786597510d1358be3b04a7e9146e");
+        assert_eq!(sdp.archive_name, "SpringBoard Core 0.5.2");
     }
 }

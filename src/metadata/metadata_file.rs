@@ -107,6 +107,6 @@ mod tests {
         .await
         .unwrap()
         .unwrap();
-        assert_eq!(sdp.fullname, "byar:test");
+        assert_eq!(sdp.rapid_name, "byar:test");
     }
 }

@@ -6,10 +6,10 @@ pub struct Repo {
 
 #[derive(Debug, PartialEq)]
 pub struct Sdp {
-    pub fullname: String,
-    pub something: String, // what's the purpose of this field?
+    pub rapid_name: String,
     pub md5: String,
-    pub alias: String,
+    pub depends: String, // what's the purpose of this field?
+    pub archive_name: String,
 }
 
 #[derive(Debug, Default, PartialEq)]

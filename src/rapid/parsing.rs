@@ -52,10 +52,12 @@ pub fn read_rapid_from_str(parsed_gz: &str) -> Vec<Sdp> {
             continue;
         }
         entries.push(Sdp {
-            fullname: line_entry[0].to_string(),
+            rapid_name: line_entry[0].to_string(),
             md5: line_entry[1].to_string(),
-            something: line_entry[3].to_string(),
-            alias: line_entry[2].to_string(),
+            depends: line_entry[2].to_string(),
+            archive_name: line_entry[3].to_string(),
+            // something: line_entry[3].to_string(),
+            // alias: line_entry[2].to_string(),
         });
     }
 

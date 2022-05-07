@@ -5,7 +5,7 @@ use sprd::{
     validation::{self, ValidityErrors},
 };
 
-pub async fn validate_by_fullname(
+pub async fn verify(
     rapid_store: &rapid::rapid_store::RapidStore,
     opts: &DownloadOptions,
     fullname: &str,

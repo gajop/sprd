@@ -13,7 +13,11 @@ enum Errors {
     NoSuchRepo,
 }
 
-pub async fn download_repo(rapid_store: &RapidStore, opts: &DownloadOptions, repo: Option<&str>) {
+pub async fn meta_download_repo(
+    rapid_store: &RapidStore,
+    opts: &DownloadOptions,
+    repo: Option<&str>,
+) {
     match repo {
         Some(repo) => handle_errors(download_one_repo(rapid_store, opts, repo).await, opts),
         None => handle_errors(download_all_repos(rapid_store, opts).await, opts),

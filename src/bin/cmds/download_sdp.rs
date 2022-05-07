@@ -5,7 +5,7 @@ use sprd::{
     rapid::{self, rapid_store::RapidStore},
 };
 
-pub async fn download_sdp(rapid_store: &RapidStore, opts: &DownloadOptions, sdp_md5: &str) {
+pub async fn meta_download_sdp(rapid_store: &RapidStore, opts: &DownloadOptions, sdp_md5: &str) {
     let repo_registry =
         match rapid::parsing::parse_repos_from_file(&rapid_store.get_registry_path()) {
             Err(err) => {

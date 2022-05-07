@@ -72,7 +72,7 @@ async fn fix_attempt(
         }
     }
 
-    download::download(rapid_store, opts, fullname).await;
+    download(rapid_store, opts, fullname).await;
 
     false
 }

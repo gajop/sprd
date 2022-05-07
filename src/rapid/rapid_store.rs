@@ -7,20 +7,20 @@ use super::parsing::read_rapid_from_file;
 use super::types::{Repo, Sdp, SdpPackage};
 
 pub struct RapidStore {
-    pub root_folder: PathBuf,
+    pub root: PathBuf,
 }
 
 impl Default for RapidStore {
     fn default() -> Self {
         RapidStore {
-            root_folder: util::default_spring_dir(),
+            root: util::default_spring_dir(),
         }
     }
 }
 
 impl RapidStore {
     pub fn new(path: PathBuf) -> Self {
-        Self { root_folder: path }
+        Self { root: path }
     }
 
     // pub fn find_repo(&self, name: &str) -> Result<Option<Repo>, Box<dyn Error>> {
@@ -29,7 +29,7 @@ impl RapidStore {
     // }
 
     pub fn find_sdp(&self, repo: &Repo, name: &str) -> Result<Option<Sdp>, GzReadError> {
-        let repo_path = self.root_folder.join(&format!(
+        let repo_path = self.root.join(&format!(
             "rapid/repos.springrts.com/{}/versions.gz",
             repo.name
         ));
@@ -47,7 +47,7 @@ impl RapidStore {
     }
 
     pub fn get_registry_path(&self) -> path::PathBuf {
-        self.root_folder.join("rapid/repos.springrts.com/repos.gz")
+        self.root.join("rapid/repos.springrts.com/repos.gz")
     }
 
     pub fn get_repo_path(&self, repo: &Repo) -> path::PathBuf {
@@ -56,7 +56,7 @@ impl RapidStore {
             http_split = repo.url.split("https://").collect();
         }
         let name = http_split[1];
-        self.root_folder.join(format!("rapid/{name}/versions.gz"))
+        self.root.join(format!("rapid/{name}/versions.gz"))
     }
 
     pub fn get_sdp_path(&self, sdp: &Sdp) -> path::PathBuf {
@@ -64,12 +64,12 @@ impl RapidStore {
     }
 
     pub fn get_sdp_path_from_md5(&self, sdp_md5: &str) -> path::PathBuf {
-        self.root_folder
+        self.root
             .join(path::PathBuf::from(format!("packages/{sdp_md5}.sdp")))
     }
 
     pub fn get_pool_path(&self, sdp_package: &SdpPackage) -> path::PathBuf {
-        let file_path = self.root_folder.join(format!(
+        let file_path = self.root.join(format!(
             "pool/{}{}/{}.gz",
             sdp_package.md5[0] as char,
             sdp_package.md5[1] as char,

@@ -99,10 +99,10 @@ This project is under construction and not ready for use.
 Below you can see my very rough roadmap:
 
 ### :construction: In progress:
+- Improve command naming: download-repo is especially deceptive
 
 
 ### :bookmark: Dev release:
-- Improve command naming: download-repo is especially deceptive
 - Pool downloader autofix files
 - Check validity of other metadata files too: save size & gz validity
 - Auto-retry

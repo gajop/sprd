@@ -81,6 +81,25 @@ mod tests {
     use super::*;
 
     #[tokio::test]
+    async fn test_query_by_rapid_version() {
+        let query_names = [
+            "sbc:git:860aac5eb5ce292121b741ca8514516777ae14dc",
+            "SpringBoard Core 0.5.2",
+            "sbc:test",
+            "sbc:stable",
+        ];
+
+        let rapid_store = RapidStore::new(test_utils::setup_pr_downloader_folders());
+
+        for query_name in query_names {
+            let result = query_metadata(&rapid_store, query_name).await;
+
+            assert!(result.is_ok(), "Query is Err: {query_name}");
+            assert!(result.unwrap().is_some(), "Query is None: {query_name}");
+        }
+    }
+
+    #[tokio::test]
     async fn test_query_sdp_files() {
         let rapid_store = RapidStore::new(test_utils::setup_pr_downloader_folders());
 

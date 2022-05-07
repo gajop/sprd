@@ -99,8 +99,7 @@ This project is under construction and not ready for use.
 Below you can see my very rough roadmap:
 
 ### :construction: In progress:
-- Improve command naming: download-repo is especially deceptive
-
+- Add tests for various types of downloads
 
 ### :bookmark: Dev release:
 - Pool downloader autofix files

@@ -1,15 +1,15 @@
-pub mod check_sdp;
+pub mod check_exists;
 pub mod download;
-pub mod download_registry;
-pub mod download_repo;
-pub mod download_sdp;
 pub mod fix;
-pub mod validate;
+pub mod meta_download_registry;
+pub mod meta_download_repo;
+pub mod meta_download_sdp;
+pub mod verify;
 
-pub use check_sdp::check_exists;
+pub use check_exists::check_exists;
 pub use download::download;
-pub use download_registry::meta_download_registry;
-pub use download_repo::meta_download_repo;
-pub use download_sdp::meta_download_sdp;
 pub use fix::fix;
-pub use validate::verify;
+pub use meta_download_registry::meta_download_registry;
+pub use meta_download_repo::meta_download_repo;
+pub use meta_download_sdp::meta_download_sdp;
+pub use verify::verify;

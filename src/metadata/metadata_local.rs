@@ -132,8 +132,7 @@ mod tests {
         let folders = list_files(Path::new("test_folders/test_sprd/pool/"));
         let prd_files: HashSet<String> = folders
             .iter()
-            .map(|dir| list_files(dir))
-            .flatten()
+            .flat_map(|dir| list_files(dir))
             .map(|f| {
                 format!(
                     "{}{}",

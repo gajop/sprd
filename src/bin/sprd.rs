@@ -3,7 +3,7 @@
 
 use std::{path::PathBuf, sync::Arc};
 
-use clap::{ArgEnum, Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 use output::{interactive::InteractiveOutput, json::JsonOutput};
 use sprd::{
     api::{DownloadOptions, MetadataSource},
@@ -16,20 +16,20 @@ use atty::Stream;
 mod cmds;
 mod output;
 
-#[derive(Parser)]
+#[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = "Rapid client")]
 struct Args {
     #[clap(short, long)] // parse(from_os_str) needed?
     root: Option<PathBuf>,
 
-    #[clap(short, long, arg_enum, default_value_t = OutputType::Auto)]
+    #[clap(short, long, value_enum, default_value_t = OutputType::Auto)]
     output: OutputType,
 
     #[clap(subcommand)]
     command: Commands,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ArgEnum)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, ValueEnum)]
 enum OutputType {
     Auto,
     Silent,
@@ -38,7 +38,7 @@ enum OutputType {
     Interactive,
 }
 
-#[derive(Subcommand)]
+#[derive(Subcommand, Debug)]
 enum Commands {
     /// Download the specified (rapid) resource
     Download { rapid_name: String },

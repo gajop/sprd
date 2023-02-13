@@ -9,22 +9,22 @@ repository = "https://github.com/gajop/sprd"
 version = "0.1.0"
 
 [dependencies]
-anyhow = "1.0"
+anyhow = "1.0.69"
 dirs = "4.0.0"
-flate2 = "1.0.22"
-hyper = {version = "0.14.16", features = ["client", "http1", "http2"]}
-hyper-rustls = "0.23.0"
-md-5 = "0.10.0"
-reqwest = {version = "0.11", default-features = false, features = ["json", "rustls-tls"]}
-serde = {version = "1.0.136", features = ["derive"]}
-thiserror = "1.0"
-tokio = {version = "1.16.1", features = ["full"]}
+flate2 = "1.0.25"
+hyper = { version = "0.14.24", features = ["client", "http1", "http2"] }
+hyper-rustls = "0.23.2"
+md-5 = "0.10.5"
+reqwest = { version = "0.11.14", default-features = false, features = ["json", "rustls-tls"] }
+serde = { version = "1.0.152", features = ["derive"] }
+thiserror = "1.0.38"
+tokio = { version = "1.25.0", features = ["full"] }
 
 # TODO: Binary only, remove from lib
-atty = "0.2"
-clap = {version = "3.0.14", features = ["derive"]}
-indicatif = "0.16.2"
-serde_json = "1.0"
+atty = "0.2.14"
+clap = { version = "4.1.4", features = ["derive"] }
+indicatif = "0.17.3"
+serde_json = "1.0.93"
 
 [dev-dependencies]
 tempfile = "3.3.0"

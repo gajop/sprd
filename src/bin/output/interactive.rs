@@ -26,6 +26,7 @@ impl Print for InteractiveOutput {
                 pb.set_style(
                     ProgressStyle::default_bar()
                         .template(&pb_template)
+                        .unwrap()
                         .progress_chars("#>-"),
                 );
 
